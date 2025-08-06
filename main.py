@@ -4,7 +4,7 @@ import json
 import os
 import time
 import logging
-import epaper
+from waveshare_epd import epd2in7
 from pregnancy_tracker import ScreenUI, Pregnancy
 
 logging.basicConfig(level=logging.WARN)
@@ -13,8 +13,9 @@ config_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'co
 config = json.load(open(config_file_path))
 
 try:
-    epd = epaper.epaper('epd2in7').EPD()
-    epd.Init_4Gray()
+    epd = epd2in7.EPD()
+    epd.init()
+    epd.Clear(0xFF)
 
     pregnancy = Pregnancy(config['expected_birth_date'])
 
