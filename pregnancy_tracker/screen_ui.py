@@ -92,11 +92,11 @@ class ScreenUI:
         self._draw_carriage()
 
     def _get_current_screen(self):
-        """Determine which screen to show based on time (switches every 5 minutes)"""
+        """Determine which screen to show based on time (switches every minute)"""
         if self.force_screen is not None:
             return self.force_screen
         current_minute = int(time.time() / 60)
-        screen_index = (current_minute // 5) % 2
+        screen_index = current_minute % 2  # Changed from (current_minute // 5) % 2
         return screen_index
 
     def _draw_size_comparison(self):
@@ -117,46 +117,46 @@ class ScreenUI:
         content_start_y = line_y + 20
         
         # LEFT COLUMN - Week information
-        # Draw week label (smaller, gray)
-        week_label_font = create_font(14)
+        # Draw week label (bigger, darker)
+        week_label_font = create_font(18)  # Increased from 14
         week_label = "WEEK"
         w, h = self._calculate_text_size(week_label, week_label_font)
         pos = (left_column_x - w/2, content_start_y)
-        self._img_draw.text(pos, week_label, font=week_label_font, fill=DARK_GRAY)
+        self._img_draw.text(pos, week_label, font=week_label_font, fill=BLACK)  # Changed to BLACK
         
         # Draw week number (large, bold)
-        week_num_font = create_font(54)
+        week_num_font = create_font(60)  # Increased from 54
         week_num_str = str(week)
         w, h = self._calculate_text_size(week_num_str, week_num_font)
-        pos = (left_column_x - w/2, content_start_y + 20)
+        pos = (left_column_x - w/2, content_start_y + 22)
         self._img_draw.text(pos, week_num_str, font=week_num_font, fill=BLACK)
         
         # Draw vertical divider line
         divider_x = self.width / 2
         self._img_draw.line(
-            [(divider_x, content_start_y), (divider_x, content_start_y + 80)], 
+            [(divider_x, content_start_y), (divider_x, content_start_y + 90)],  # Extended line
             fill=LIGHT_GRAY, 
             width=1
         )
         
         # RIGHT COLUMN - Size information
         # Draw "Baby size" label
-        size_label_font = create_font(11)
+        size_label_font = create_font(16)  # Increased from 11
         size_label = "BABY SIZE"
         w, h = self._calculate_text_size(size_label, size_label_font)
         pos = (right_column_x - w/2, content_start_y)
-        self._img_draw.text(pos, size_label, font=size_label_font, fill=DARK_GRAY)
+        self._img_draw.text(pos, size_label, font=size_label_font, fill=BLACK)  # Changed to BLACK
         
         # Draw size comparison
         size_str = size_comparison.upper()
         
-        # Dynamically adjust font size based on text length
+        # Dynamically adjust font size based on text length (all increased)
         if len(size_str) > 14:
-            size_font = create_font(14)  # Smaller for very long names
+            size_font = create_font(20)  # Increased from 14
         elif len(size_str) > 10:
-            size_font = create_font(16)  # Medium for long names
+            size_font = create_font(22)  # Increased from 16
         else:
-            size_font = create_font(18)  # Normal size for short names
+            size_font = create_font(24)  # Increased from 18
         
         # Check if we need to break into two lines
         w, h = self._calculate_text_size(size_str, size_font)
@@ -176,25 +176,25 @@ class ScreenUI:
             w1, h1 = self._calculate_text_size(line1, size_font)
             w2, h2 = self._calculate_text_size(line2, size_font)
             
-            pos1 = (right_column_x - w1/2, content_start_y + 20)
-            pos2 = (right_column_x - w2/2, content_start_y + 36)
+            pos1 = (right_column_x - w1/2, content_start_y + 22)
+            pos2 = (right_column_x - w2/2, content_start_y + 44)
             
             self._img_draw.text(pos1, line1, font=size_font, fill=BLACK)
             self._img_draw.text(pos2, line2, font=size_font, fill=BLACK)
             
-            length_y = content_start_y + 56
+            length_y = content_start_y + 68
         else:
             # Single line
             w, h = self._calculate_text_size(size_str, size_font)
-            pos = (right_column_x - w/2, content_start_y + 28)
+            pos = (right_column_x - w/2, content_start_y + 30)
             self._img_draw.text(pos, size_str, font=size_font, fill=BLACK)
-            length_y = content_start_y + 50
+            length_y = content_start_y + 56
         
-        # Draw length
-        length_font = create_font(14)
+        # Draw length (bigger and darker)
+        length_font = create_font(18)  # Increased from 14
         w, h = self._calculate_text_size(size_length, length_font)
         pos = (right_column_x - w/2, length_y)
-        self._img_draw.text(pos, size_length, font=length_font, fill=DARK_GRAY)
+        self._img_draw.text(pos, size_length, font=length_font, fill=BLACK)  # Changed to BLACK
 
     def _draw_page_indicators(self, current_page):
         """Draw page indicator dots at the bottom"""
