@@ -98,16 +98,21 @@ sudo crontab -e
 # If prompted, select option 1 for nano editor
 ```
 
-Add this line for updates every minute (recommended for screen switching):
+Add this line for updates every 10 minutes (recommended):
 ```bash
-# Update every minute to ensure both screens are shown
-* * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
+# Update every 10 minutes - balanced for display lifespan and screen rotation
+*/10 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
 ```
+
+**Why every 10 minutes?**
+- Screens switch every 20 minutes
+- Updates twice per screen cycle ensures both screens are shown
+- Preserves e-ink display lifespan
 
 **Alternative update frequencies:**
 ```bash
-# Update every 10 minutes (each screen shows for 20 minutes)
-*/10 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
+# Update every 5 minutes (more frequent updates, shorter display life)
+*/5 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
 
 # Update every 20 minutes (shows alternating screens each update)
 */20 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
@@ -122,7 +127,62 @@ sudo crontab -l
 
 Save and exit. The cron job will now run automatically.
 
-### 9. (Optional) Setup as System Service
+### 9. (Optional) Setup Automatic GitHub Updates
+To automatically pull updates from GitHub (useful for multiple Pis), create an update script:
+
+```bash
+# Create the update script
+nano ~/e-ink-pregnancy-tracker/auto_update.sh
+```
+
+Add this content:
+```bash
+#!/bin/bash
+# Auto-update script for pregnancy tracker
+
+cd /home/kylefoley/e-ink-pregnancy-tracker
+
+# Pull latest changes from GitHub
+git pull origin master
+
+# Copy waveshare library back if it was removed
+if [ ! -d "waveshare_epd" ]; then
+    echo "Restoring waveshare_epd library..."
+    cp -r ~/e-Paper/RaspberryPi_JetsonNano/python/lib/waveshare_epd ./
+fi
+
+echo "Update completed at $(date)"
+```
+
+Make it executable:
+```bash
+chmod +x ~/e-ink-pregnancy-tracker/auto_update.sh
+```
+
+Add to cron to run daily at 3 AM:
+```bash
+sudo crontab -e
+```
+
+Add this line (in addition to your display update line):
+```bash
+# Auto-update from GitHub daily at 3 AM
+0 3 * * * /home/kylefoley/e-ink-pregnancy-tracker/auto_update.sh >> /home/kylefoley/update.log 2>&1
+```
+
+Now your Pi will automatically pull any updates you push to GitHub!
+
+Test the update script manually:
+```bash
+~/e-ink-pregnancy-tracker/auto_update.sh
+```
+
+Check update logs:
+```bash
+tail -f /home/kylefoley/update.log
+```
+
+### 10. (Optional) Setup as System Service
 For more reliable operation, create a systemd service:
 
 ```bash
@@ -255,7 +315,7 @@ Ensure your 2.7" e-Paper HAT is properly connected to the GPIO pins:
 - **GPIO Access**: Requires sudo to access GPIO pins
 - **Screen Switching**: Alternates between Progress and Size screens every 20 minutes
 - The display updates slowly (2-3 seconds) - this is normal for e-ink
-- Updates every minute are safe for the display lifespan
+- Recommended update frequency is every 10 minutes for optimal display lifespan
 - The display retains the image even when powered off
 - In cold temperatures, the display may update more slowly
 

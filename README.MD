@@ -1,31 +1,236 @@
 # E-ink Pregnancy Tracker
 
-A simple project that displays the status of a pregnancy using [2.7 inch e-Paper HAT by Waveshare](https://www.waveshare.com/2.7inch-e-paper-hat.htm). Meant to be run on a Raspberry Pi.
+A Raspberry Pi-powered pregnancy tracker that displays pregnancy progress on a 2.7 inch e-Paper HAT. The display alternates between showing percentage completion and baby size comparisons.
 
 ![Sample screen image](docs/sample-screen.png)
-
 ![Completed project photo](docs/completed-project.jpg)
 
-## Setup
-1. Configure your Raspberry Pi according to the [docs provided by Waveshare](https://www.waveshare.com/wiki/2.7inch_e-Paper_HAT_Manual#Working_With_Raspberry_Pi).
-2. Clone this repo:
-    ```
-    git clone https://github.com/grappeq/e-ink-pregnancy-tracker.git
-    ```
-3. Install dependencies:
-    ```
-    pip3 install -r requirements.txt
-    ```
-4. Install libopenjp2 required by Pillow:
-    ```
-    sudo apt-get install libopenjp2-7
-    ```
-5. Copy the `config.json.example` file as `config.json` and set the expected birth date.
-6. Configure cron to run the `main.py` file on a schedule (e.g. every 30 mins).
+## Features
+- **Dual Display Modes**: Automatically alternates between progress percentage and baby size comparison screens
+- **Low Power**: E-ink display retains image even when powered off
+- **Automatic Updates**: Configurable update frequency via cron
+- **Clean Design**: Minimalist display with clear, readable information
 
-## Testing
-If you wish to try out the package locally, you can run the `local_test.py` file. The script generates the image and displays it on your screen without the need of relying on packages that are available only on Raspberry Pi.
+## Hardware Requirements
+- Raspberry Pi (Zero/Zero W recommended for compact build)
+- [2.7 inch e-Paper HAT by Waveshare](https://www.waveshare.com/2.7inch-e-paper-hat.htm) (264x176 pixels, Rev 2.2)
+- MicroSD card (8GB+)
+- Power supply for Raspberry Pi
 
-## Useful resources
-* [2.7 inch e-Paper HAT docs](https://www.waveshare.com/wiki/2.7inch_e-Paper_HAT)
-* [Model of the case for the display and Raspberry Pi Zero](https://www.printables.com/model/538237-27-inch-e-ink-display-raspberry-pi-zero-case) (visible on the photo above)
+### GPIO Connections
+If not using the HAT directly, connect as follows:
+- VCC → 3.3V (Pin 1)
+- GND → GND (Pin 6)
+- DIN → MOSI (Pin 19)
+- CLK → SCLK (Pin 23)
+- CS → CE0 (Pin 24)
+- DC → GPIO 25 (Pin 22)
+- RST → GPIO 17 (Pin 11)
+- BUSY → GPIO 24 (Pin 18)
+
+## Installation
+
+### Prerequisites
+- Raspberry Pi with Raspberry Pi OS installed
+- SSH access enabled
+- SPI interface enabled (via `sudo raspi-config`)
+
+### Step 1: Update System
+```bash
+sudo apt-get update
+sudo apt-get upgrade -y
+```
+
+### Step 2: Install System Dependencies
+```bash
+# Python and development tools
+sudo apt-get install python3-pip python3-dev git -y
+
+# Display libraries
+sudo apt-get install python3-pil python3-numpy -y
+sudo apt-get install libopenjp2-7 -y
+
+# GPIO and SPI libraries
+sudo apt-get install python3-rpi.gpio python3-spidev -y
+```
+
+### Step 3: Enable SPI Interface
+```bash
+sudo raspi-config nonint do_spi 0
+```
+
+### Step 4: Clone the Project
+```bash
+cd ~
+git clone https://github.com/grappeq/e-ink-pregnancy-tracker.git
+cd e-ink-pregnancy-tracker
+```
+
+### Step 5: Install Waveshare Display Library
+```bash
+# Clone official Waveshare repository
+cd ~
+git clone https://github.com/waveshare/e-Paper.git
+
+# Copy library to project
+cd e-Paper/RaspberryPi_JetsonNano/python
+cp -r lib/waveshare_epd ~/e-ink-pregnancy-tracker/
+
+# Return to project directory
+cd ~/e-ink-pregnancy-tracker
+```
+
+### Step 6: Configure the Application
+```bash
+cp config.json.example config.json
+nano config.json
+```
+
+Edit to set your expected birth date:
+```json
+{
+    "expected_birth_date": "2025-05-15"
+}
+```
+
+### Step 7: Test the Display
+```bash
+sudo python3 main.py
+```
+
+You should see the pregnancy tracker display on your e-ink screen!
+
+## Automatic Updates with Cron
+
+Set up automatic display updates:
+
+```bash
+sudo crontab -e
+```
+
+Add one of these configurations:
+
+**Recommended - Every 10 minutes:**
+```bash
+*/10 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
+```
+
+**Alternative frequencies:**
+```bash
+# Every 5 minutes (more frequent updates)
+*/5 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
+
+# Every 20 minutes (less frequent, longer display life)
+*/20 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
+```
+
+Note: Replace `/home/pi` with your actual home directory if different.
+
+### Why 10 minutes?
+- Screens switch every 20 minutes automatically
+- Updates twice per screen cycle ensures both displays are shown
+- Balances display lifespan with update frequency
+
+## Optional: Auto-Update from GitHub
+
+To automatically pull code updates:
+
+1. Create update script:
+```bash
+nano ~/e-ink-pregnancy-tracker/auto_update.sh
+```
+
+2. Add this content:
+```bash
+#!/bin/bash
+cd /home/pi/e-ink-pregnancy-tracker
+git pull origin master
+
+# Restore waveshare library if needed
+if [ ! -d "waveshare_epd" ]; then
+    cp -r ~/e-Paper/RaspberryPi_JetsonNano/python/lib/waveshare_epd ./
+fi
+
+echo "Update completed at $(date)"
+```
+
+3. Make executable:
+```bash
+chmod +x ~/e-ink-pregnancy-tracker/auto_update.sh
+```
+
+4. Add to cron (runs daily at 3 AM):
+```bash
+sudo crontab -e
+# Add this line:
+0 3 * * * /home/pi/e-ink-pregnancy-tracker/auto_update.sh >> /home/pi/update.log 2>&1
+```
+
+## Troubleshooting
+
+### Display Not Working
+1. **Check SPI is enabled:**
+   ```bash
+   ls /dev/spi*
+   # Should show /dev/spidev0.0 and /dev/spidev0.1
+   ```
+
+2. **Check GPIO permissions:**
+   ```bash
+   sudo usermod -a -G gpio,spi $USER
+   # Then logout and login again
+   ```
+
+3. **Test with Waveshare examples:**
+   ```bash
+   cd ~/e-Paper/RaspberryPi_JetsonNano/python/examples
+   sudo python3 epd_2in7_test.py
+   ```
+
+### Python Module Errors
+If "No module named 'waveshare_epd'":
+```bash
+cd ~/e-Paper/RaspberryPi_JetsonNano/python
+cp -r lib/waveshare_epd ~/e-ink-pregnancy-tracker/
+```
+
+### Permission Errors
+```bash
+# Quick fix - run with sudo
+sudo python3 main.py
+
+# Permanent fix - adjust permissions
+sudo chmod 666 /dev/spidev0.0
+sudo chmod 666 /dev/spidev0.1
+```
+
+### Checking Logs
+```bash
+# Cron logs
+tail -f ~/tracker.log
+
+# Check cron execution
+sudo grep CRON /var/log/syslog | tail -10
+```
+
+## Local Testing
+To test the display output on your development machine without a Raspberry Pi:
+```bash
+python3 local_test.py
+```
+This generates and displays the image locally without requiring Raspberry Pi-specific packages.
+
+## Important Notes
+- **Display updates slowly (2-3 seconds)** - this is normal for e-ink technology
+- **GPIO access requires sudo** - all display updates need root permissions
+- **Display retains image when powered off** - e-ink technology benefit
+- **Cold temperatures may slow updates** - e-ink limitation
+- Uses the `epd2in7_V2` driver for Waveshare 2.7" Rev 2.2 displays
+
+## Useful Resources
+- [2.7 inch e-Paper HAT Documentation](https://www.waveshare.com/wiki/2.7inch_e-Paper_HAT)
+- [3D Printable Case for Display and Raspberry Pi Zero](https://www.printables.com/model/538237-27-inch-e-ink-display-raspberry-pi-zero-case)
+- [Waveshare e-Paper GitHub Repository](https://github.com/waveshare/e-Paper)
+
+## License
+This project is open source and available under the MIT License.
