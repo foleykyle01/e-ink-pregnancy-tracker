@@ -45,13 +45,21 @@ git clone https://github.com/grappeq/e-ink-pregnancy-tracker.git
 cd e-ink-pregnancy-tracker
 ```
 
-### 5. Install Python Dependencies
+### 5. Install Waveshare Display Library
 ```bash
-# Install the Waveshare e-Paper library and other requirements
-pip3 install -r requirements.txt
+# Clone the official Waveshare repository
+cd ~
+git clone https://github.com/waveshare/e-Paper.git
 
-# If you encounter permission issues, use:
-sudo pip3 install -r requirements.txt --break-system-packages
+# Copy the library to your project
+cd e-Paper/RaspberryPi_JetsonNano/python
+cp -r lib/waveshare_epd ~/e-ink-pregnancy-tracker/
+
+# Go back to project directory
+cd ~/e-ink-pregnancy-tracker
+
+# Install Python PIL dependency
+sudo apt-get install python3-pil -y
 ```
 
 ### 6. Configure the Application
@@ -71,28 +79,45 @@ Save with Ctrl+X, Y, Enter
 
 ### 7. Test the Display
 ```bash
-# Run the main script to test
-python3 main.py
+# Run the main script to test (requires sudo for GPIO access)
+sudo python3 main.py
 ```
 
 You should see the pregnancy tracker display on your e-ink screen!
 
+**Note:** The display alternates between two screens:
+- **Progress screen**: Shows percentage complete with week/day
+- **Size screen**: Shows current week number and baby size comparison
+- Screens automatically switch every 20 minutes
+
 ### 8. Setup Automatic Updates with Cron
 ```bash
-# Open crontab editor
-crontab -e
+# Use root's crontab for GPIO access
+sudo crontab -e
+
+# If prompted, select option 1 for nano editor
 ```
 
-Add one of these lines (choose your update frequency):
+Add this line for updates every minute (recommended for screen switching):
 ```bash
-# Update every 30 minutes
-*/30 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
+# Update every minute to ensure both screens are shown
+* * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
+```
 
-# Update every hour
-0 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
+**Alternative update frequencies:**
+```bash
+# Update every 10 minutes (each screen shows for 20 minutes)
+*/10 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
 
-# Update twice daily (8am and 8pm)
-0 8,20 * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
+# Update every 20 minutes (shows alternating screens each update)
+*/20 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
+```
+
+Save with `Ctrl+X`, then `Y`, then `Enter`.
+
+Verify the cron job was added:
+```bash
+sudo crontab -l
 ```
 
 Save and exit. The cron job will now run automatically.
@@ -113,9 +138,9 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=pi
-WorkingDirectory=/home/pi/e-ink-pregnancy-tracker
-ExecStart=/usr/bin/python3 /home/pi/e-ink-pregnancy-tracker/main.py
+User=root
+WorkingDirectory=/home/kylefoley/e-ink-pregnancy-tracker
+ExecStart=/usr/bin/python3 /home/kylefoley/e-ink-pregnancy-tracker/main.py
 StandardOutput=journal
 StandardError=journal
 
@@ -185,8 +210,9 @@ sudo systemctl status pregnancy-tracker.timer
 ### Python Module Errors
 If you get "No module named 'waveshare_epd'":
 ```bash
-# Reinstall the package
-sudo pip3 install --upgrade --force-reinstall waveshare-epaper==1.2.0
+# Make sure you've copied the library from Waveshare repo
+cd ~/e-Paper/RaspberryPi_JetsonNano/python
+cp -r lib/waveshare_epd ~/e-ink-pregnancy-tracker/
 ```
 
 ### Permission Errors
@@ -223,8 +249,22 @@ Ensure your 2.7" e-Paper HAT is properly connected to the GPIO pins:
 - RST → GPIO 17 (Pin 11)
 - BUSY → GPIO 24 (Pin 18)
 
-## Notes
+## Important Notes
+- **Display Version**: This setup is for the 2.7" Rev 2.2 display (264x176 pixels)
+- **Driver**: Uses the `epd2in7_V2` driver from waveshare_epd library
+- **GPIO Access**: Requires sudo to access GPIO pins
+- **Screen Switching**: Alternates between Progress and Size screens every 20 minutes
 - The display updates slowly (2-3 seconds) - this is normal for e-ink
-- Frequent updates (more than once per minute) may reduce display lifespan
+- Updates every minute are safe for the display lifespan
 - The display retains the image even when powered off
 - In cold temperatures, the display may update more slowly
+
+## Monitoring
+Check if updates are working:
+```bash
+# View the log file
+tail -f /home/kylefoley/tracker.log
+
+# Check cron execution
+sudo grep CRON /var/log/syslog | tail -10
+```

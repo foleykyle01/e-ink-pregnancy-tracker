@@ -92,11 +92,11 @@ class ScreenUI:
         self._draw_carriage()
 
     def _get_current_screen(self):
-        """Determine which screen to show based on time (switches every minute)"""
+        """Determine which screen to show based on time (switches every 20 minutes)"""
         if self.force_screen is not None:
             return self.force_screen
         current_minute = int(time.time() / 60)
-        screen_index = current_minute % 2  # Changed from (current_minute // 5) % 2
+        screen_index = (current_minute // 20) % 2  # Switch screens every 20 minutes
         return screen_index
 
     def _draw_size_comparison(self):
@@ -109,7 +109,7 @@ class ScreenUI:
         
         # Draw decorative line under title
         line_y = self.TITLE_MARGIN_TOP + title_h + 6
-        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=LIGHT_GRAY, width=1)
+        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
         
         # Define column positions
         left_column_x = self.width * 0.25  # 25% from left
@@ -135,8 +135,8 @@ class ScreenUI:
         divider_x = self.width / 2
         self._img_draw.line(
             [(divider_x, content_start_y), (divider_x, content_start_y + 90)],  # Extended line
-            fill=LIGHT_GRAY, 
-            width=1
+            fill=BLACK, 
+            width=2
         )
         
         # RIGHT COLUMN - Size information
