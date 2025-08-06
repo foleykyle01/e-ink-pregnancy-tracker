@@ -34,7 +34,7 @@ class ScreenUI:
 
     def _draw_title(self):
         font = create_font(20)
-        title_str = "New Foley Progress"
+        title_str = "New Foley Tracker"
         w, h = self._calculate_text_size(title_str, font)
         pos = ((self.width-w)/2, self.TITLE_MARGIN_TOP)
         self._img_draw.text(pos, title_str, font=font, fill=BLACK)
