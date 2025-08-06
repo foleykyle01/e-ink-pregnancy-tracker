@@ -4,7 +4,7 @@
 - Raspberry Pi with fresh OS installed (headless)
 - SPI enabled (via `sudo raspi-config`)
 - SSH access to your Pi
-- 2.7 inch Waveshare e-Paper HAT (Rev 2.2) connected directly to GPIO pins
+- 2.7 inch Waveshare e-Paper HAT connected
 
 ## Step-by-Step Setup
 
@@ -45,23 +45,13 @@ git clone https://github.com/grappeq/e-ink-pregnancy-tracker.git
 cd e-ink-pregnancy-tracker
 ```
 
-### 5. Install Waveshare Display Library
+### 5. Install Python Dependencies
 ```bash
-# Clone the official Waveshare repository
-cd ~
-git clone https://github.com/waveshare/e-Paper.git
+# Install the Waveshare e-Paper library and other requirements
+pip3 install -r requirements.txt
 
-# Copy the library to your project
-cd e-Paper/RaspberryPi_JetsonNano/python
-cp -r lib/waveshare_epd ~/e-ink-pregnancy-tracker/
-
-# Go back to project directory
-cd ~/e-ink-pregnancy-tracker
-
-# Install other Python dependencies
-pip3 install Pillow --break-system-packages
-# Or if you prefer without the flag:
-sudo apt-get install python3-pil
+# If you encounter permission issues, use:
+sudo pip3 install -r requirements.txt --break-system-packages
 ```
 
 ### 6. Configure the Application
@@ -81,15 +71,11 @@ Save with Ctrl+X, Y, Enter
 
 ### 7. Test the Display
 ```bash
-# Run the main script to test (requires sudo for GPIO access)
-sudo python3 main.py
+# Run the main script to test
+python3 main.py
 ```
 
 You should see the pregnancy tracker display on your e-ink screen!
-
-Note: The display alternates between two screens every 5 minutes:
-- Progress screen: Shows percentage complete and week/day
-- Size screen: Shows current week and baby size comparison
 
 ### 8. Setup Automatic Updates with Cron
 ```bash
@@ -99,8 +85,8 @@ crontab -e
 
 Add one of these lines (choose your update frequency):
 ```bash
-# Update every 30 minutes (with sudo for GPIO access)
-*/30 * * * * cd /home/pi/e-ink-pregnancy-tracker && sudo /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
+# Update every 30 minutes
+*/30 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
 
 # Update every hour
 0 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
@@ -127,7 +113,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=root
+User=pi
 WorkingDirectory=/home/pi/e-ink-pregnancy-tracker
 ExecStart=/usr/bin/python3 /home/pi/e-ink-pregnancy-tracker/main.py
 StandardOutput=journal
@@ -199,9 +185,8 @@ sudo systemctl status pregnancy-tracker.timer
 ### Python Module Errors
 If you get "No module named 'waveshare_epd'":
 ```bash
-# Make sure you've copied the library from Waveshare repo
-cd ~/e-Paper/RaspberryPi_JetsonNano/python
-cp -r lib/waveshare_epd ~/e-ink-pregnancy-tracker/
+# Reinstall the package
+sudo pip3 install --upgrade --force-reinstall waveshare-epaper==1.2.0
 ```
 
 ### Permission Errors
@@ -238,12 +223,8 @@ Ensure your 2.7" e-Paper HAT is properly connected to the GPIO pins:
 - RST → GPIO 17 (Pin 11)
 - BUSY → GPIO 24 (Pin 18)
 
-## Important Notes
-- **Display Version**: This setup is for the 2.7" Rev 2.2 display (264x176 pixels)
-- **Driver**: Uses the epd2in7_V2 driver from waveshare_epd library
-- **GPIO Access**: Requires sudo to access GPIO pins
+## Notes
 - The display updates slowly (2-3 seconds) - this is normal for e-ink
 - Frequent updates (more than once per minute) may reduce display lifespan
 - The display retains the image even when powered off
 - In cold temperatures, the display may update more slowly
-- The screen alternates between progress and size comparison every 5 minutes
