@@ -98,7 +98,7 @@ fi
 echo
 echo "✓ Auto-update cron job configured successfully!"
 echo "  Updates will run: $FREQ_DESC"
-echo "  Log file: /home/pi/pregnancy-tracker-update.log"
+echo "  Log file: $HOME/pregnancy-tracker-update.log"
 echo
 
 # Set up display update cron jobs
@@ -133,5 +133,5 @@ echo "Setup complete! Your cron jobs:"
 echo "================================"
 crontab -l | grep -E "(auto_update|main.py)" || echo "No cron jobs found"
 echo
-echo "To monitor updates, run: tail -f /home/pi/pregnancy-tracker-update.log"
+echo "To monitor updates, run: tail -f $HOME/pregnancy-tracker-update.log"
 echo "To manually trigger an update, run: $REPO_DIR/auto_update.sh"
