@@ -8,6 +8,9 @@
 
 ## Step-by-Step Setup
 
+## If there is an existing connection to the PI
+ssh-keygen -R 192.168.1.240
+
 ### 1. Update System
 ```bash
 sudo apt-get update
@@ -41,7 +44,7 @@ sudo apt-get install python3-rpi.gpio python3-spidev -y
 ### 4. Clone the Project
 ```bash
 cd ~
-git clone https://github.com/grappeq/e-ink-pregnancy-tracker.git
+git clone https://github.com/foleykyle01/e-ink-pregnancy-tracker.git
 cd e-ink-pregnancy-tracker
 ```
 
@@ -90,7 +93,27 @@ You should see the pregnancy tracker display on your e-ink screen!
 - **Size screen**: Shows current week number and baby size comparison
 - Screens automatically switch every 20 minutes
 
-### 8. Setup Automatic Updates with Cron
+### 8. Automated Setup (Recommended)
+
+Use the automated setup script for complete configuration:
+
+```bash
+bash setup_auto_update.sh
+```
+
+The script will:
+1. Ask for your preferred GitHub update frequency (recommended: every 12 hours)
+2. Configure display update cron jobs based on `settings/display_config.json`
+3. Optionally set up boot startup
+4. Create all necessary logging
+
+This is the recommended approach as it enables:
+- Automatic GitHub updates
+- Remote configuration management
+- Proper logging and monitoring
+- Display timing control via settings files
+
+### 8a. Manual Setup (Alternative)
 ```bash
 # Use root's crontab for GPIO access
 sudo crontab -e
@@ -101,7 +124,7 @@ sudo crontab -e
 Add this line for updates every 10 minutes (recommended):
 ```bash
 # Update every 10 minutes - balanced for display lifespan and screen rotation
-*/10 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
+*/10 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
 ```
 
 **Why every 10 minutes?**
@@ -112,10 +135,10 @@ Add this line for updates every 10 minutes (recommended):
 **Alternative update frequencies:**
 ```bash
 # Update every 5 minutes (more frequent updates, shorter display life)
-*/5 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
+*/5 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
 
 # Update every 20 minutes (shows alternating screens each update)
-*/20 * * * * cd /home/kylefoley/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/kylefoley/tracker.log 2>&1
+*/20 * * * * cd /home/pi/e-ink-pregnancy-tracker && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1
 ```
 
 Save with `Ctrl+X`, then `Y`, then `Enter`.
@@ -127,60 +150,36 @@ sudo crontab -l
 
 Save and exit. The cron job will now run automatically.
 
-### 9. (Optional) Setup Automatic GitHub Updates
-To automatically pull updates from GitHub (useful for multiple Pis), create an update script:
+### 9. Remote Management and Monitoring
 
+The automated setup includes remote management capabilities:
+
+#### Monitoring System Status
 ```bash
-# Create the update script
-nano ~/e-ink-pregnancy-tracker/auto_update.sh
+# Check system health, configuration, and cron jobs
+bash monitor_updates.sh
 ```
 
-Add this content:
+#### Remote Configuration
+Modify files in the `settings/` directory and push to GitHub:
+- `settings/display_config.json` - Control display timing
+- `config.json` - Set birth date (per device)
+
+Changes are automatically applied on next update cycle.
+
+#### Manual Operations
 ```bash
-#!/bin/bash
-# Auto-update script for pregnancy tracker
+# Force immediate update from GitHub
+bash auto_update.sh
 
-cd /home/kylefoley/e-ink-pregnancy-tracker
+# View update logs
+tail -f /home/pi/pregnancy-tracker-update.log
 
-# Pull latest changes from GitHub
-git pull origin master
-
-# Copy waveshare library back if it was removed
-if [ ! -d "waveshare_epd" ]; then
-    echo "Restoring waveshare_epd library..."
-    cp -r ~/e-Paper/RaspberryPi_JetsonNano/python/lib/waveshare_epd ./
-fi
-
-echo "Update completed at $(date)"
+# View display logs
+tail -f /home/pi/tracker.log
 ```
 
-Make it executable:
-```bash
-chmod +x ~/e-ink-pregnancy-tracker/auto_update.sh
-```
-
-Add to cron to run daily at 3 AM:
-```bash
-sudo crontab -e
-```
-
-Add this line (in addition to your display update line):
-```bash
-# Auto-update from GitHub daily at 3 AM
-0 3 * * * /home/kylefoley/e-ink-pregnancy-tracker/auto_update.sh >> /home/kylefoley/update.log 2>&1
-```
-
-Now your Pi will automatically pull any updates you push to GitHub!
-
-Test the update script manually:
-```bash
-~/e-ink-pregnancy-tracker/auto_update.sh
-```
-
-Check update logs:
-```bash
-tail -f /home/kylefoley/update.log
-```
+See [REMOTE_SETTINGS.md](../REMOTE_SETTINGS.md) for detailed configuration options.
 
 ### 10. (Optional) Setup as System Service
 For more reliable operation, create a systemd service:
@@ -199,8 +198,8 @@ After=network.target
 [Service]
 Type=oneshot
 User=root
-WorkingDirectory=/home/kylefoley/e-ink-pregnancy-tracker
-ExecStart=/usr/bin/python3 /home/kylefoley/e-ink-pregnancy-tracker/main.py
+WorkingDirectory=/home/pi/e-ink-pregnancy-tracker
+ExecStart=/usr/bin/python3 /home/pi/e-ink-pregnancy-tracker/main.py
 StandardOutput=journal
 StandardError=journal
 
@@ -309,15 +308,45 @@ Ensure your 2.7" e-Paper HAT is properly connected to the GPIO pins:
 - RST → GPIO 17 (Pin 11)
 - BUSY → GPIO 24 (Pin 18)
 
+## Deployment for End Users
+
+Once setup is complete, the Raspberry Pi becomes a plug-and-play device:
+
+### What Recipients Need:
+- Power outlet (USB-C or micro USB depending on Pi model)
+- Internet connection (Ethernet or pre-configured WiFi)
+- **Nothing else!** No configuration, no technical knowledge required
+
+### What Happens When They Plug It In:
+1. Pi boots automatically (30-60 seconds)
+2. Display starts showing pregnancy information
+3. Updates continue based on your configured schedule
+4. GitHub updates pull automatically
+5. Remote configuration changes apply without user intervention
+
+### Pre-Deployment Checklist:
+```bash
+# Verify all systems are working
+bash monitor_updates.sh
+
+# Confirm cron jobs are set up
+sudo crontab -l
+crontab -l
+
+# Test display manually one more time
+sudo python3 main.py
+```
+
 ## Important Notes
 - **Display Version**: This setup is for the 2.7" Rev 2.2 display (264x176 pixels)
 - **Driver**: Uses the `epd2in7_V2` driver from waveshare_epd library
 - **GPIO Access**: Requires sudo to access GPIO pins
-- **Screen Switching**: Alternates between Progress and Size screens every 20 minutes
+- **Screen Switching**: Alternates between Progress and Size screens every 20 minutes (configurable)
 - The display updates slowly (2-3 seconds) - this is normal for e-ink
 - Recommended update frequency is every 10 minutes for optimal display lifespan
 - The display retains the image even when powered off
 - In cold temperatures, the display may update more slowly
+- **Plug & Play**: Once configured, works autonomously with no user interaction
 
 ## Monitoring
 Check if updates are working:
