@@ -3,9 +3,9 @@
 # Display Cron Manager for Pregnancy Tracker
 # This script manages the display update cron jobs based on display_config.json
 
-REPO_DIR="/home/pi/e-ink-pregnancy-tracker"
+REPO_DIR="$HOME/e-ink-pregnancy-tracker"
 CONFIG_FILE="$REPO_DIR/settings/display_config.json"
-LOG_FILE="/home/pi/display-cron.log"
+LOG_FILE="$HOME/display-cron.log"
 CRON_IDENTIFIER="# PREGNANCY_TRACKER_DISPLAY"
 
 # Function to log messages
@@ -66,7 +66,7 @@ remove_existing_crons
 
 if [ "$DISPLAY_ENABLED" = "true" ]; then
     # Build the main display update command
-    DISPLAY_CMD="cd $REPO_DIR && /usr/bin/python3 main.py >> /home/pi/tracker.log 2>&1"
+    DISPLAY_CMD="cd $REPO_DIR && /usr/bin/sudo /usr/bin/python3 main.py >> $HOME/tracker.log 2>&1"
     
     if [ "$UPDATE_TYPE" = "interval" ]; then
         # Create interval-based cron schedule

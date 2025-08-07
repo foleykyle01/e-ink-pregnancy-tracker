@@ -2,7 +2,7 @@
 
 ## Prerequisites
 - Raspberry Pi with fresh OS installed (headless)
-- SPI enabled (via `sudo raspi-config`)
+- SPI enabled (via `sudo raspi-config` then `sudo reboot`)
 - SSH access to your Pi
 - 2.7 inch Waveshare e-Paper HAT connected
 

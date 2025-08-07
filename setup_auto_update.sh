@@ -17,8 +17,12 @@ if [ ! -f /proc/device-tree/model ] || ! grep -q "Raspberry Pi" /proc/device-tre
     fi
 fi
 
-# Get the repository directory
-DEFAULT_DIR="/home/pi/e-ink-pregnancy-tracker"
+# Get the repository directory - auto-detect current directory
+DEFAULT_DIR="$(pwd)"
+if [ ! -d ".git" ]; then
+    # If not in a git repo, try common locations
+    DEFAULT_DIR="$HOME/e-ink-pregnancy-tracker"
+fi
 read -p "Enter the repository directory [$DEFAULT_DIR]: " REPO_DIR
 REPO_DIR="${REPO_DIR:-$DEFAULT_DIR}"
 
@@ -112,7 +116,7 @@ echo "Would you like to also run the tracker on system boot? (y/n): "
 read -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    BOOT_CMD="@reboot sleep 30 && cd $REPO_DIR && /usr/bin/python3 main.py > /home/pi/pregnancy-tracker.log 2>&1 &"
+    BOOT_CMD="@reboot sleep 30 && cd $REPO_DIR && /usr/bin/sudo /usr/bin/python3 main.py > $HOME/pregnancy-tracker.log 2>&1 &"
     
     # Check if boot job already exists
     if crontab -l 2>/dev/null | grep -q "@reboot.*main.py"; then

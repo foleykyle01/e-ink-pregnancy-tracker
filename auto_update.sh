@@ -4,8 +4,8 @@
 # This script pulls the latest changes from GitHub and restarts the tracker
 
 # Configuration
-REPO_DIR="/home/pi/e-ink-pregnancy-tracker"
-LOG_FILE="/home/pi/pregnancy-tracker-update.log"
+REPO_DIR="$HOME/e-ink-pregnancy-tracker"
+LOG_FILE="$HOME/pregnancy-tracker-update.log"
 BRANCH="master"
 REPO_URL="https://github.com/foleykyle01/e-ink-pregnancy-tracker.git"
 
@@ -67,7 +67,7 @@ else
         # Run the updated tracker
         log_message "Starting updated pregnancy tracker..."
         cd "$REPO_DIR"
-        python3 main.py >> "$LOG_FILE" 2>&1 &
+        sudo python3 main.py >> "$LOG_FILE" 2>&1 &
         
         log_message "Update complete. Tracker restarted with PID $!"
     else

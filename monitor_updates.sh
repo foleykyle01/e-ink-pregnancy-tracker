@@ -3,9 +3,9 @@
 # Monitor script for pregnancy tracker updates and health
 # This script provides diagnostic information and log monitoring
 
-REPO_DIR="/home/pi/e-ink-pregnancy-tracker"
-LOG_FILE="/home/pi/pregnancy-tracker-update.log"
-TRACKER_LOG="/home/pi/pregnancy-tracker.log"
+REPO_DIR="$HOME/e-ink-pregnancy-tracker"
+LOG_FILE="$HOME/pregnancy-tracker-update.log"
+TRACKER_LOG="$HOME/pregnancy-tracker.log"
 
 # Colors for output
 RED='\033[0;31m'
