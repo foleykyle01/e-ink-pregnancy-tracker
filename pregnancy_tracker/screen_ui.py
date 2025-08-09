@@ -240,22 +240,43 @@ class ScreenUI:
             pos = ((self.width - w) / 2, line_y + 48)
             self._img_draw.text(pos, datetime_str, font=datetime_font, fill=BLACK)
             
-            # Draw appointment type in a box-like style
-            type_font = create_font(18)
+            # Draw appointment type with text wrapping if needed
+            type_font = create_font(16)  # Slightly smaller for better fit
             type_text = next_appointment['type'].upper()
+            
+            # Check if text needs wrapping
+            max_width = self.width - 40  # Leave 20px margin on each side
             w, h = self._calculate_text_size(type_text, type_font)
             
-            # Draw a rounded rectangle background for the type
             type_y = line_y + 85
-            rect_padding = 10
-            rect_x1 = (self.width - w) / 2 - rect_padding
-            rect_y1 = type_y - 3
-            rect_x2 = (self.width + w) / 2 + rect_padding
-            rect_y2 = type_y + h + 3
             
-            # Draw the type text
-            pos = ((self.width - w) / 2, type_y)
-            self._img_draw.text(pos, type_text, font=type_font, fill=BLACK)
+            if w > max_width:
+                # Text too long, wrap it
+                words = type_text.split()
+                lines = []
+                current_line = ""
+                
+                for word in words:
+                    test_line = current_line + " " + word if current_line else word
+                    test_w, _ = self._calculate_text_size(test_line, type_font)
+                    if test_w <= max_width:
+                        current_line = test_line
+                    else:
+                        if current_line:
+                            lines.append(current_line)
+                        current_line = word
+                if current_line:
+                    lines.append(current_line)
+                
+                # Draw each line centered
+                for i, line in enumerate(lines[:2]):  # Max 2 lines
+                    line_w, line_h = self._calculate_text_size(line, type_font)
+                    pos = ((self.width - line_w) / 2, type_y + i * 22)
+                    self._img_draw.text(pos, line, font=type_font, fill=BLACK)
+            else:
+                # Text fits, draw normally
+                pos = ((self.width - w) / 2, type_y)
+                self._img_draw.text(pos, type_text, font=type_font, fill=BLACK)
         else:
             # No appointments message
             no_appt_font = create_font(18)
