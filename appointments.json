@@ -1,25 +1,9 @@
 {
     "appointments": [
         {
-            "date": "2025-08-15",
-            "time": "10:30 AM",
-            "type": "Regular Checkup",
-            "location": "Dr. Smith's Office",
-            "notes": "Bring insurance card"
-        },
-        {
-            "date": "2025-08-22",
-            "time": "2:00 PM",
-            "type": "Ultrasound",
-            "location": "Imaging Center",
-            "notes": "Drink water before"
-        },
-        {
-            "date": "2025-09-05",
-            "time": "9:00 AM",
-            "type": "Glucose Test",
-            "location": "Lab Services",
-            "notes": "Fasting required"
+            "date": "2025-09-08",
+            "time": "2:30 PM",
+            "type": "First Appointment With the OB!"
         }
     ]
 }
