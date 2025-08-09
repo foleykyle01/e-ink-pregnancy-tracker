@@ -1,38 +1,27 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding:utf-8 -*-
+"""
+Main script with sequential GPIO initialization
+Initializes display first, then buttons to avoid conflicts
+"""
 import json
 import os
 import time
 import logging
 import signal
 import sys
-import argparse
-import threading
-from waveshare_epd import epd2in7_V2  # Use V2 driver for Rev 2.2 display
-from pregnancy_tracker import ScreenUI, Pregnancy
-
-# Parse command line arguments
-parser = argparse.ArgumentParser(description='E-ink Pregnancy Tracker')
-parser.add_argument('--no-buttons', action='store_true', help='Run without button support')
-args = parser.parse_args()
-
-if not args.no_buttons:
-    try:
-        from pregnancy_tracker.button_handler_simple import ButtonHandler
-    except ImportError:
-        from pregnancy_tracker.button_handler import ButtonHandler
 
 logging.basicConfig(level=logging.INFO)
 
+# Load config first
 config_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.json')
 config = json.load(open(config_file_path))
 
-# Global variables for cleanup
+# Global variables
 epd = None
 button_handler = None
 screen_ui = None
-display_lock = threading.Lock()  # Thread lock for display updates
-last_update_time = 0  # Track last display update
+pregnancy = None
 
 def cleanup_and_exit(signum=None, frame=None):
     """Clean up resources and exit"""
@@ -42,102 +31,107 @@ def cleanup_and_exit(signum=None, frame=None):
     if button_handler:
         try:
             button_handler.cleanup()
-        except Exception as e:
-            logging.error(f"Error cleaning up buttons: {e}")
+        except:
+            pass
     
     if epd:
         try:
             epd.sleep()
-        except Exception as e:
-            logging.error(f"Error putting display to sleep: {e}")
+        except:
+            pass
     
     sys.exit(0)
 
-def handle_button_press(button_num):
-    """Handle button press and update display"""
-    global epd, screen_ui, last_update_time
+def update_display(page_num):
+    """Update display to specified page"""
+    global epd, screen_ui
     
-    # Prevent multiple rapid updates
-    current_time = time.time()
-    if current_time - last_update_time < 2:  # Minimum 2 seconds between updates
-        logging.info(f"Button {button_num} press ignored (too soon after last update)")
-        return
-    
-    logging.info(f"Handling button {button_num} press")
-    
-    # Map button number to page (button 1 = page 0, etc.)
-    page_num = button_num - 1
-    
-    if 0 <= page_num <= 3:
-        # Use lock to ensure thread safety
-        with display_lock:
-            try:
-                last_update_time = current_time
-                
-                # Update the page
-                screen_ui.set_page(page_num)
-                
-                # Redraw the screen
-                himage = screen_ui.draw()
-                
-                # Display the new image (no sleep/wake cycle needed)
-                epd.display(epd.getbuffer(himage))
-                
-                logging.info(f"Display updated to page {page_num + 1}")
-                
-            except Exception as e:
-                logging.error(f"Error updating display: {e}")
+    try:
+        logging.info(f"Updating to page {page_num + 1}")
+        screen_ui.set_page(page_num)
+        himage = screen_ui.draw()
+        epd.display(epd.getbuffer(himage))
+        logging.info("Display updated")
+    except Exception as e:
+        logging.error(f"Display update error: {e}")
 
-# Register signal handlers for clean exit
+# Register signal handlers
 signal.signal(signal.SIGINT, cleanup_and_exit)
 signal.signal(signal.SIGTERM, cleanup_and_exit)
 
 try:
-    # Initialize e-ink display
+    # Step 1: Initialize display FIRST
+    logging.info("Step 1: Initializing display...")
+    from waveshare_epd import epd2in7_V2
     epd = epd2in7_V2.EPD()
-    epd.init()  # Regular black and white mode
+    epd.init()
     epd.Clear()
+    logging.info("Display initialized successfully")
     
-    # Initialize pregnancy tracker
+    # Step 2: Setup pregnancy tracker and UI
+    logging.info("Step 2: Setting up UI...")
+    from pregnancy_tracker import ScreenUI, Pregnancy
     pregnancy = Pregnancy(config['expected_birth_date'])
-    
-    # Initialize screen UI (start with page 0)
     screen_ui = ScreenUI(epd.height, epd.width, pregnancy, current_page=0)
     
-    # Draw initial screen
+    # Step 3: Show initial screen
+    logging.info("Step 3: Displaying initial screen...")
     himage = screen_ui.draw()
     epd.display(epd.getbuffer(himage))
-    logging.info("Initial display complete")
     
-    # Don't sleep the display when using buttons - keep it ready
-    
-    if not args.no_buttons:
-        # Initialize button handler with callback
-        button_handler = ButtonHandler(callback=handle_button_press)
+    # Step 4: Now try to initialize buttons AFTER display is set up
+    logging.info("Step 4: Initializing buttons...")
+    try:
+        # Import RPi.GPIO directly to avoid conflicts
+        import RPi.GPIO as GPIO
         
-        logging.info("Pregnancy tracker started. Press buttons to switch pages.")
-        logging.info("Button 1: Progress | Button 2: Size | Button 3: Appointments | Button 4: Baby Info")
+        # Setup GPIO mode
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
         
-        # Keep the program running to handle button presses
+        # Button pins
+        buttons = {1: 5, 2: 6, 3: 13, 4: 19}
+        
+        # Setup buttons
+        for btn, pin in buttons.items():
+            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        
+        logging.info("Buttons initialized successfully")
+        logging.info("Press buttons to change screens:")
+        logging.info("  Button 1: Progress")
+        logging.info("  Button 2: Size")
+        logging.info("  Button 3: Appointments")
+        logging.info("  Button 4: Baby Info")
+        
+        # Simple polling loop
+        button_states = {btn: 1 for btn in buttons}
+        last_press_time = 0
+        
         while True:
-            time.sleep(0.1)
-    else:
-        logging.info("Pregnancy tracker displayed (no button support). Press Ctrl+C to exit.")
-        # Just display and exit after a delay
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
-
-except IOError as e:
-    logging.error(f"IO Error: {e}")
-    cleanup_and_exit()
-
-except KeyboardInterrupt:
-    logging.info("Keyboard interrupt received")
-    cleanup_and_exit()
+            for btn, pin in buttons.items():
+                current = GPIO.input(pin)
+                # Button pressed (LOW)
+                if current == 0 and button_states[btn] == 1:
+                    current_time = time.time()
+                    if current_time - last_press_time > 1:  # 1 second debounce
+                        last_press_time = current_time
+                        update_display(btn - 1)
+                button_states[btn] = current
+            time.sleep(0.05)
+            
+    except ImportError:
+        logging.warning("RPi.GPIO not available - running without buttons")
+        logging.info("Display showing. Press Ctrl+C to exit.")
+        while True:
+            time.sleep(1)
+    except Exception as e:
+        logging.error(f"Button initialization failed: {e}")
+        logging.info("Running without buttons. Press Ctrl+C to exit.")
+        while True:
+            time.sleep(1)
 
 except Exception as e:
-    logging.error(f"Unexpected error: {e}")
+    logging.error(f"Fatal error: {e}")
+    import traceback
+    traceback.print_exc()
     cleanup_and_exit()
