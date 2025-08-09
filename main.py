@@ -7,6 +7,7 @@ import logging
 import signal
 import sys
 import argparse
+import threading
 from waveshare_epd import epd2in7_V2  # Use V2 driver for Rev 2.2 display
 from pregnancy_tracker import ScreenUI, Pregnancy
 
@@ -21,7 +22,7 @@ if not args.no_buttons:
     except ImportError:
         from pregnancy_tracker.button_handler import ButtonHandler
 
-logging.basicConfig(level=logging.WARN)
+logging.basicConfig(level=logging.INFO)
 
 config_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.json')
 config = json.load(open(config_file_path))
@@ -30,6 +31,8 @@ config = json.load(open(config_file_path))
 epd = None
 button_handler = None
 screen_ui = None
+display_lock = threading.Lock()  # Thread lock for display updates
+last_update_time = 0  # Track last display update
 
 def cleanup_and_exit(signum=None, frame=None):
     """Clean up resources and exit"""
@@ -52,7 +55,13 @@ def cleanup_and_exit(signum=None, frame=None):
 
 def handle_button_press(button_num):
     """Handle button press and update display"""
-    global epd, screen_ui
+    global epd, screen_ui, last_update_time
+    
+    # Prevent multiple rapid updates
+    current_time = time.time()
+    if current_time - last_update_time < 2:  # Minimum 2 seconds between updates
+        logging.info(f"Button {button_num} press ignored (too soon after last update)")
+        return
     
     logging.info(f"Handling button {button_num} press")
     
@@ -60,20 +69,24 @@ def handle_button_press(button_num):
     page_num = button_num - 1
     
     if 0 <= page_num <= 3:
-        screen_ui.set_page(page_num)
-        
-        # Redraw the screen
-        himage = screen_ui.draw()
-        
-        # Wake up the display if it's sleeping
-        epd.init()
-        
-        # Display the new image
-        epd.display(epd.getbuffer(himage))
-        
-        # Put display back to sleep to save power
-        time.sleep(2)
-        epd.sleep()
+        # Use lock to ensure thread safety
+        with display_lock:
+            try:
+                last_update_time = current_time
+                
+                # Update the page
+                screen_ui.set_page(page_num)
+                
+                # Redraw the screen
+                himage = screen_ui.draw()
+                
+                # Display the new image (no sleep/wake cycle needed)
+                epd.display(epd.getbuffer(himage))
+                
+                logging.info(f"Display updated to page {page_num + 1}")
+                
+            except Exception as e:
+                logging.error(f"Error updating display: {e}")
 
 # Register signal handlers for clean exit
 signal.signal(signal.SIGINT, cleanup_and_exit)
@@ -94,10 +107,9 @@ try:
     # Draw initial screen
     himage = screen_ui.draw()
     epd.display(epd.getbuffer(himage))
-    time.sleep(2)
+    logging.info("Initial display complete")
     
-    # Put display to sleep to save power
-    epd.sleep()
+    # Don't sleep the display when using buttons - keep it ready
     
     if not args.no_buttons:
         # Initialize button handler with callback
