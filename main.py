@@ -26,10 +26,16 @@ def cleanup_and_exit(signum=None, frame=None):
     logging.info("Cleaning up...")
     
     if button_handler:
-        button_handler.cleanup()
+        try:
+            button_handler.cleanup()
+        except Exception as e:
+            logging.error(f"Error cleaning up buttons: {e}")
     
     if epd:
-        epd.sleep()
+        try:
+            epd.sleep()
+        except Exception as e:
+            logging.error(f"Error putting display to sleep: {e}")
     
     sys.exit(0)
 

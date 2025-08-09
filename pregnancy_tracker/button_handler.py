@@ -20,12 +20,30 @@ class ButtonHandler:
         self.last_press_time = {1: 0, 2: 0, 3: 0, 4: 0}
         self.debounce_time = 0.3  # 300ms debounce
         
+        try:
+            # Clean up any existing GPIO state
+            GPIO.cleanup([self.KEY1_PIN, self.KEY2_PIN, self.KEY3_PIN, self.KEY4_PIN])
+        except:
+            pass  # Ignore if pins weren't previously set up
+        
         # Setup GPIO
         GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)  # Disable warnings about pins already in use
+        
+        # Setup pins
         GPIO.setup(self.KEY1_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(self.KEY2_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(self.KEY3_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(self.KEY4_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        
+        # Remove any existing event detection first
+        try:
+            GPIO.remove_event_detect(self.KEY1_PIN)
+            GPIO.remove_event_detect(self.KEY2_PIN)
+            GPIO.remove_event_detect(self.KEY3_PIN)
+            GPIO.remove_event_detect(self.KEY4_PIN)
+        except:
+            pass
         
         # Setup interrupts
         GPIO.add_event_detect(self.KEY1_PIN, GPIO.FALLING, callback=lambda x: self._button_pressed(1), bouncetime=300)
