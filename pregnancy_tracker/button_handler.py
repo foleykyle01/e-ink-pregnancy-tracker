@@ -6,6 +6,7 @@ import logging
 
 class ButtonHandler:
     # GPIO pin mappings for the 4 buttons on Waveshare 2.7inch e-Paper HAT
+    # Updated to correct pins based on Waveshare documentation
     KEY1_PIN = 5
     KEY2_PIN = 6
     KEY3_PIN = 13

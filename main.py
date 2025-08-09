@@ -6,9 +6,20 @@ import time
 import logging
 import signal
 import sys
+import argparse
 from waveshare_epd import epd2in7_V2  # Use V2 driver for Rev 2.2 display
 from pregnancy_tracker import ScreenUI, Pregnancy
-from pregnancy_tracker.button_handler import ButtonHandler
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='E-ink Pregnancy Tracker')
+parser.add_argument('--no-buttons', action='store_true', help='Run without button support')
+args = parser.parse_args()
+
+if not args.no_buttons:
+    try:
+        from pregnancy_tracker.button_handler_simple import ButtonHandler
+    except ImportError:
+        from pregnancy_tracker.button_handler import ButtonHandler
 
 logging.basicConfig(level=logging.WARN)
 
@@ -88,15 +99,24 @@ try:
     # Put display to sleep to save power
     epd.sleep()
     
-    # Initialize button handler with callback
-    button_handler = ButtonHandler(callback=handle_button_press)
-    
-    logging.info("Pregnancy tracker started. Press buttons to switch pages.")
-    logging.info("Button 1: Progress | Button 2: Size | Button 3: Appointments | Button 4: Baby Info")
-    
-    # Keep the program running to handle button presses
-    while True:
-        time.sleep(0.1)
+    if not args.no_buttons:
+        # Initialize button handler with callback
+        button_handler = ButtonHandler(callback=handle_button_press)
+        
+        logging.info("Pregnancy tracker started. Press buttons to switch pages.")
+        logging.info("Button 1: Progress | Button 2: Size | Button 3: Appointments | Button 4: Baby Info")
+        
+        # Keep the program running to handle button presses
+        while True:
+            time.sleep(0.1)
+    else:
+        logging.info("Pregnancy tracker displayed (no button support). Press Ctrl+C to exit.")
+        # Just display and exit after a delay
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
 
 except IOError as e:
     logging.error(f"IO Error: {e}")
