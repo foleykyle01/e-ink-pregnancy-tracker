@@ -49,7 +49,8 @@ class ScreenUI:
         w, h = self._calculate_text_size(percent_str, font)
         title_font = create_font(20)
         _, title_h = self._calculate_text_size("New Foley Progress", title_font)
-        pos = ((self.width-w)/2, self.TITLE_MARGIN_TOP + title_h + 8)
+        # Adjust position to account for the decorative line
+        pos = ((self.width-w)/2, self.TITLE_MARGIN_TOP + title_h + 18)
         self._img_draw.text(pos, percent_str, font=font, fill=BLACK)
 
     def _draw_weekday(self):
@@ -121,9 +122,8 @@ class ScreenUI:
         title_font = create_font(20)
         _, title_h = self._calculate_text_size("New Foley Progress", title_font)
         
-        # Draw decorative line under title
+        # Line is already drawn in main draw() method
         line_y = self.TITLE_MARGIN_TOP + title_h + 6
-        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
         
         # Define column positions
         left_column_x = self.width * 0.25  # 25% from left
@@ -215,9 +215,8 @@ class ScreenUI:
         title_font = create_font(20)
         _, title_h = self._calculate_text_size("New Foley Progress", title_font)
         
-        # Draw decorative line under title
+        # Line is already drawn in main draw() method
         line_y = self.TITLE_MARGIN_TOP + title_h + 6
-        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
         
         # Get next appointment
         next_appointment = self._get_next_appointment()
@@ -293,9 +292,8 @@ class ScreenUI:
         title_font = create_font(20)
         _, title_h = self._calculate_text_size("New Foley Progress", title_font)
         
-        # Draw decorative line under title
+        # Line is already drawn in main draw() method
         line_y = self.TITLE_MARGIN_TOP + title_h + 6
-        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
         
         # Get current info
         week = self.pregnancy.get_pregnancy_week()
@@ -366,6 +364,12 @@ class ScreenUI:
         self._img_draw = ImageDraw.Draw(self._img)
         
         self._draw_title()
+        
+        # Draw decorative line under title for all pages
+        title_font = create_font(20)
+        _, title_h = self._calculate_text_size("New Foley Progress", title_font)
+        line_y = self.TITLE_MARGIN_TOP + title_h + 6
+        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
         
         if self.current_page == 0:
             # Progress screen
