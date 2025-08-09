@@ -30,3 +30,6 @@ class Pregnancy:
 
     def get_pregnancy_weekday(self):
         return math.floor(self.get_pregnancy_day())%7
+    
+    def get_days_until_due_date(self):
+        return (self.birth_date - datetime.now()).days

@@ -110,6 +110,14 @@ else
     echo "Display cron manager not found. Will use default schedule."
 fi
 
+# Install required Python packages if not already installed
+echo
+echo "Checking Python dependencies..."
+pip3 list | grep -q "RPi.GPIO" || {
+    echo "Installing RPi.GPIO..."
+    pip3 install RPi.GPIO
+}
+
 # Also set up the main tracker to run on boot
 echo
 echo "Would you like to also run the tracker on system boot? (y/n): "

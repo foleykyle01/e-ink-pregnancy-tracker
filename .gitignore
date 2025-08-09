@@ -2,3 +2,26 @@
 *.iml
 
 config.json
+
+# Test files
+test_*.py
+*_preview.png
+screen_*.png
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+
+# Logs
+*.log
+pregnancy-tracker*.log
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,4 +1,7 @@
 import time
+import json
+import os
+from datetime import datetime
 from PIL import Image, ImageDraw
 
 from .icons import carriage_icon_path, moon_icon_path
@@ -20,13 +23,14 @@ class ScreenUI:
     PAGE_DOT_SIZE = 6
     PAGE_DOT_SPACING = 12
 
-    def __init__(self, width, height, pregnancy, force_screen=None):
+    def __init__(self, width, height, pregnancy, current_page=0):
         self.pregnancy = pregnancy
         self.width = width
         self.height = height
-        self.force_screen = force_screen  # For testing: 0=progress, 1=size, None=auto
+        self.current_page = current_page  # 0=progress, 1=size, 2=appointments, 3=baby info
         self._img = Image.new('L', (self.width, self.height), 255)  # 255: clear the frame
         self._img_draw = ImageDraw.Draw(self._img)
+        self._load_appointments()
 
     def _calculate_text_size(self, message, font):
         _, _, w, h = self._img_draw.textbbox((0, 0), message, font=font)
@@ -91,13 +95,23 @@ class ScreenUI:
         self._draw_progress_bar_mid()
         self._draw_carriage()
 
-    def _get_current_screen(self):
-        """Determine which screen to show based on time (switches every 20 minutes)"""
-        if self.force_screen is not None:
-            return self.force_screen
-        current_minute = int(time.time() / 60)
-        screen_index = (current_minute // 20) % 2  # Switch screens every 20 minutes
-        return screen_index
+    def _load_appointments(self):
+        """Load appointments from JSON file"""
+        try:
+            appointments_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+                'appointments.json'
+            )
+            with open(appointments_path, 'r') as f:
+                data = json.load(f)
+                self.appointments = data.get('appointments', [])
+        except Exception as e:
+            self.appointments = []
+    
+    def set_page(self, page_num):
+        """Set the current page (0-3)"""
+        if 0 <= page_num <= 3:
+            self.current_page = page_num
 
     def _draw_size_comparison(self):
         """Draw the size comparison screen with two-column layout"""
@@ -195,21 +209,156 @@ class ScreenUI:
         w, h = self._calculate_text_size(size_length, length_font)
         pos = (right_column_x - w/2, length_y)
         self._img_draw.text(pos, size_length, font=length_font, fill=BLACK)  # Changed to BLACK
+    
+    def _draw_appointments_page(self):
+        """Draw the appointments page showing next upcoming appointment"""
+        title_font = create_font(20)
+        _, title_h = self._calculate_text_size("New Foley Progress", title_font)
+        
+        # Draw decorative line under title
+        line_y = self.TITLE_MARGIN_TOP + title_h + 6
+        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
+        
+        # Get next appointment
+        next_appointment = self._get_next_appointment()
+        
+        if next_appointment:
+            # Draw "COMING UP" header with better spacing
+            header_font = create_font(16)
+            header_text = "COMING UP"
+            w, h = self._calculate_text_size(header_text, header_font)
+            pos = ((self.width - w) / 2, line_y + 20)
+            self._img_draw.text(pos, header_text, font=header_font, fill=DARK_GRAY)
+            
+            # Parse and format date
+            appt_date = datetime.strptime(next_appointment['date'], '%Y-%m-%d')
+            date_str = appt_date.strftime('%b %d').upper()  # Shortened format like "AUG 15"
+            
+            # Draw date and time in larger font on same line
+            datetime_font = create_font(24)
+            datetime_str = f"{date_str} • {next_appointment['time']}"
+            w, h = self._calculate_text_size(datetime_str, datetime_font)
+            pos = ((self.width - w) / 2, line_y + 48)
+            self._img_draw.text(pos, datetime_str, font=datetime_font, fill=BLACK)
+            
+            # Draw appointment type in a box-like style
+            type_font = create_font(18)
+            type_text = next_appointment['type'].upper()
+            w, h = self._calculate_text_size(type_text, type_font)
+            
+            # Draw a rounded rectangle background for the type
+            type_y = line_y + 85
+            rect_padding = 10
+            rect_x1 = (self.width - w) / 2 - rect_padding
+            rect_y1 = type_y - 3
+            rect_x2 = (self.width + w) / 2 + rect_padding
+            rect_y2 = type_y + h + 3
+            
+            # Draw the type text
+            pos = ((self.width - w) / 2, type_y)
+            self._img_draw.text(pos, type_text, font=type_font, fill=BLACK)
+        else:
+            # No appointments message
+            no_appt_font = create_font(18)
+            no_appt_text = "No upcoming appointments"
+            w, h = self._calculate_text_size(no_appt_text, no_appt_font)
+            pos = ((self.width - w) / 2, (self.height - h) / 2)
+            self._img_draw.text(pos, no_appt_text, font=no_appt_font, fill=BLACK)
+    
+    def _get_next_appointment(self):
+        """Get the next upcoming appointment"""
+        if not self.appointments:
+            return None
+        
+        today = datetime.now().date()
+        future_appointments = []
+        
+        for appt in self.appointments:
+            try:
+                appt_date = datetime.strptime(appt['date'], '%Y-%m-%d').date()
+                if appt_date >= today:
+                    future_appointments.append(appt)
+            except:
+                continue
+        
+        # Sort by date and return the first one
+        if future_appointments:
+            future_appointments.sort(key=lambda x: x['date'])
+            return future_appointments[0]
+        
+        return None
+    
+    def _draw_baby_info_page(self):
+        """Draw baby information page in two columns"""
+        title_font = create_font(20)
+        _, title_h = self._calculate_text_size("New Foley Progress", title_font)
+        
+        # Draw decorative line under title
+        line_y = self.TITLE_MARGIN_TOP + title_h + 6
+        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
+        
+        # Get current info
+        week = self.pregnancy.get_pregnancy_week()
+        days_left = self.pregnancy.get_days_until_due_date()
+        trimester = "First" if week <= 13 else "Second" if week <= 27 else "Third"
+        progress = self.pregnancy.get_percent_str()
+        
+        # Define column positions
+        left_column_x = self.width * 0.25  # 25% from left
+        right_column_x = self.width * 0.75  # 75% from left
+        content_start_y = line_y + 25
+        
+        # LEFT COLUMN
+        # Week label
+        label_font = create_font(14)
+        week_label = "WEEK"
+        w, h = self._calculate_text_size(week_label, label_font)
+        pos = (left_column_x - w/2, content_start_y)
+        self._img_draw.text(pos, week_label, font=label_font, fill=DARK_GRAY)
+        
+        # Week number
+        num_font = create_font(42)
+        week_str = str(week)
+        w, h = self._calculate_text_size(week_str, num_font)
+        pos = (left_column_x - w/2, content_start_y + 20)
+        self._img_draw.text(pos, week_str, font=num_font, fill=BLACK)
+        
+        # Trimester below week
+        trim_font = create_font(12)
+        w, h = self._calculate_text_size(trimester, trim_font)
+        pos = (left_column_x - w/2, content_start_y + 65)
+        self._img_draw.text(pos, trimester, font=trim_font, fill=BLACK)
+        
+        # Draw vertical divider
+        divider_x = self.width / 2
+        self._img_draw.line(
+            [(divider_x, content_start_y), (divider_x, content_start_y + 85)],
+            fill=BLACK, 
+            width=2
+        )
+        
+        # RIGHT COLUMN
+        # Days left label
+        days_label = "DAYS LEFT"
+        w, h = self._calculate_text_size(days_label, label_font)
+        pos = (right_column_x - w/2, content_start_y)
+        self._img_draw.text(pos, days_label, font=label_font, fill=DARK_GRAY)
+        
+        # Days number
+        days_str = str(days_left)
+        w, h = self._calculate_text_size(days_str, num_font)
+        pos = (right_column_x - w/2, content_start_y + 20)
+        self._img_draw.text(pos, days_str, font=num_font, fill=BLACK)
+        
+        # Progress below days
+        w, h = self._calculate_text_size(progress, trim_font)
+        pos = (right_column_x - w/2, content_start_y + 65)
+        self._img_draw.text(pos, progress, font=trim_font, fill=BLACK)
 
     def _draw_page_indicators(self, current_page):
-        """Draw page indicator dots at the bottom"""
-        num_pages = 2
-        dot_total_width = (num_pages - 1) * self.PAGE_DOT_SPACING + num_pages * self.PAGE_DOT_SIZE
-        start_x = (self.width - dot_total_width) / 2
-        y = self.height - self.PAGE_DOTS_MARGIN_BOTTOM - self.PAGE_DOT_SIZE
-        
-        for i in range(num_pages):
-            x = start_x + i * (self.PAGE_DOT_SIZE + self.PAGE_DOT_SPACING)
-            fill_color = BLACK if i == current_page else LIGHT_GRAY
-            self._img_draw.ellipse(
-                (x, y, x + self.PAGE_DOT_SIZE, y + self.PAGE_DOT_SIZE),
-                fill=fill_color
-            )
+        """Draw page indicator dots at the bottom - DISABLED"""
+        # Page indicators removed since we're using buttons now
+        pass
 
     def draw(self):
         # Clear the image to ensure no overlap
@@ -218,18 +367,22 @@ class ScreenUI:
         
         self._draw_title()
         
-        current_screen = self._get_current_screen()
-        
-        if current_screen == 0:
+        if self.current_page == 0:
             # Progress screen
             self._draw_percent()
             self._draw_weekday()
             self._draw_progress_bar()
-        else:
+        elif self.current_page == 1:
             # Size comparison screen
             self._draw_size_comparison()
+        elif self.current_page == 2:
+            # Appointments screen
+            self._draw_appointments_page()
+        elif self.current_page == 3:
+            # Baby info screen
+            self._draw_baby_info_page()
         
-        self._draw_page_indicators(current_screen)
+        self._draw_page_indicators(self.current_page)
         return self._img
 
     def _draw_progress_done(self):
