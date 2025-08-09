@@ -8,6 +8,7 @@ from .icons import carriage_icon_path, moon_icon_path
 from .fonts import create_font
 from .gray_scale import WHITE, DARK_GRAY, BLACK, LIGHT_GRAY
 from .size_data import get_size_for_week
+from .developmental_milestones import get_milestone_for_week
 
 
 class ScreenUI:
@@ -27,7 +28,7 @@ class ScreenUI:
         self.pregnancy = pregnancy
         self.width = width
         self.height = height
-        self.current_page = current_page  # 0=progress, 1=size, 2=appointments, 3=baby info
+        self.current_page = current_page  # 0=progress, 1=size, 2=appointments, 3=milestones
         self._img = Image.new('L', (self.width, self.height), 255)  # 255: clear the frame
         self._img_draw = ImageDraw.Draw(self._img)
         self._load_appointments()
@@ -308,71 +309,74 @@ class ScreenUI:
         
         return None
     
-    def _draw_baby_info_page(self):
-        """Draw baby information page in two columns"""
+    def _draw_milestones_page(self):
+        """Draw developmental milestones page"""
         title_font = create_font(20)
         _, title_h = self._calculate_text_size("New Foley Progress", title_font)
         
         # Line is already drawn in main draw() method
         line_y = self.TITLE_MARGIN_TOP + title_h + 6
         
-        # Get current info
+        # Get milestone info for current week
         week = self.pregnancy.get_pregnancy_week()
-        days_left = self.pregnancy.get_days_until_due_date()
-        trimester = "First" if week <= 13 else "Second" if week <= 27 else "Third"
-        progress = self.pregnancy.get_percent_str()
+        milestone = get_milestone_for_week(week)
         
-        # Define column positions
-        left_column_x = self.width * 0.25  # 25% from left
-        right_column_x = self.width * 0.75  # 75% from left
-        content_start_y = line_y + 25
+        # Draw header
+        header_font = create_font(16)
+        header_text = f"WEEK {week} MILESTONES"
+        w, h = self._calculate_text_size(header_text, header_font)
+        pos = ((self.width - w) / 2, line_y + 15)
+        self._img_draw.text(pos, header_text, font=header_font, fill=DARK_GRAY)
         
-        # LEFT COLUMN
-        # Week label
-        label_font = create_font(14)
-        week_label = "WEEK"
-        w, h = self._calculate_text_size(week_label, label_font)
-        pos = (left_column_x - w/2, content_start_y)
-        self._img_draw.text(pos, week_label, font=label_font, fill=DARK_GRAY)
+        # Draw weight
+        weight_label_font = create_font(12)
+        weight_label = "WEIGHT"
+        w, h = self._calculate_text_size(weight_label, weight_label_font)
+        pos = ((self.width - w) / 2, line_y + 40)
+        self._img_draw.text(pos, weight_label, font=weight_label_font, fill=DARK_GRAY)
         
-        # Week number
-        num_font = create_font(42)
-        week_str = str(week)
-        w, h = self._calculate_text_size(week_str, num_font)
-        pos = (left_column_x - w/2, content_start_y + 20)
-        self._img_draw.text(pos, week_str, font=num_font, fill=BLACK)
+        weight_font = create_font(18)
+        weight_text = milestone['weight']
+        w, h = self._calculate_text_size(weight_text, weight_font)
+        pos = ((self.width - w) / 2, line_y + 55)
+        self._img_draw.text(pos, weight_text, font=weight_font, fill=BLACK)
         
-        # Trimester below week
-        trim_font = create_font(12)
-        w, h = self._calculate_text_size(trimester, trim_font)
-        pos = (left_column_x - w/2, content_start_y + 65)
-        self._img_draw.text(pos, trimester, font=trim_font, fill=BLACK)
+        # Draw development info with text wrapping
+        dev_label_font = create_font(12)
+        dev_label = "DEVELOPMENT"
+        w, h = self._calculate_text_size(dev_label, dev_label_font)
+        pos = ((self.width - w) / 2, line_y + 80)
+        self._img_draw.text(pos, dev_label, font=dev_label_font, fill=DARK_GRAY)
         
-        # Draw vertical divider
-        divider_x = self.width / 2
-        self._img_draw.line(
-            [(divider_x, content_start_y), (divider_x, content_start_y + 85)],
-            fill=BLACK, 
-            width=2
-        )
+        # Wrap development text if needed - smaller font for better fit
+        dev_font = create_font(13)
+        dev_text = milestone["development"]
+        max_width = self.width - 16  # 8px margin on each side
         
-        # RIGHT COLUMN
-        # Days left label
-        days_label = "DAYS LEFT"
-        w, h = self._calculate_text_size(days_label, label_font)
-        pos = (right_column_x - w/2, content_start_y)
-        self._img_draw.text(pos, days_label, font=label_font, fill=DARK_GRAY)
+        # Split text into lines that fit
+        words = dev_text.split()
+        lines = []
+        current_line = ""
         
-        # Days number
-        days_str = str(days_left)
-        w, h = self._calculate_text_size(days_str, num_font)
-        pos = (right_column_x - w/2, content_start_y + 20)
-        self._img_draw.text(pos, days_str, font=num_font, fill=BLACK)
+        for word in words:
+            test_line = current_line + " " + word if current_line else word
+            test_w, _ = self._calculate_text_size(test_line, dev_font)
+            if test_w <= max_width:
+                current_line = test_line
+            else:
+                if current_line:
+                    lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
         
-        # Progress below days
-        w, h = self._calculate_text_size(progress, trim_font)
-        pos = (right_column_x - w/2, content_start_y + 65)
-        self._img_draw.text(pos, progress, font=trim_font, fill=BLACK)
+        # Draw development text lines (max 4 lines to fit screen)
+        dev_y = line_y + 95
+        line_spacing = 16  # Reduced spacing between lines
+        for i, line in enumerate(lines[:4]):  # Increased to 4 lines
+            line_w, line_h = self._calculate_text_size(line, dev_font)
+            pos = ((self.width - line_w) / 2, dev_y + i * line_spacing)
+            self._img_draw.text(pos, line, font=dev_font, fill=BLACK)
 
     def _draw_page_indicators(self, current_page):
         """Draw page indicator dots at the bottom - DISABLED"""
@@ -404,8 +408,8 @@ class ScreenUI:
             # Appointments screen
             self._draw_appointments_page()
         elif self.current_page == 3:
-            # Baby info screen
-            self._draw_baby_info_page()
+            # Milestones screen
+            self._draw_milestones_page()
         
         self._draw_page_indicators(self.current_page)
         return self._img

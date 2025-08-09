@@ -74,7 +74,7 @@ This installer will:
 - **Button 1**: Progress screen (percentage complete)
 - **Button 2**: Baby size comparison 
 - **Button 3**: Next appointment
-- **Button 4**: Baby information
+- **Button 4**: Development milestones
 
 ### Updating Appointments
 
