@@ -25,8 +25,8 @@ echo "📦 Installing required packages..."
 sudo apt-get update
 sudo apt-get install -y python3-pip python3-pil python3-numpy git
 
-# Install Python packages
-pip3 install RPi.GPIO spidev pillow
+# Install Python packages (using break-system-packages for dedicated Pi)
+pip3 install --break-system-packages RPi.GPIO spidev pillow
 
 echo ""
 echo "🔧 Setting up auto-start service..."
