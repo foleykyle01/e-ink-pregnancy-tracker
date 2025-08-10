@@ -46,6 +46,12 @@ sudo sed -i "s|/home/kylefoley/e-ink-pregnancy-tracker|$SCRIPT_DIR|g" /etc/syste
 # Update the tracker script with correct path
 sed -i "s|REPO_DIR = \"/home/kylefoley/e-ink-pregnancy-tracker\"|REPO_DIR = \"$SCRIPT_DIR\"|g" "$SCRIPT_DIR/tracker_with_updates.py"
 
+echo ""
+echo "🔐 Configuring Git safe directory..."
+# Configure git to trust the repository directory (needed for auto-updates)
+git config --global --add safe.directory "$SCRIPT_DIR"
+sudo git config --global --add safe.directory "$SCRIPT_DIR"
+
 # Reload systemd
 sudo systemctl daemon-reload
 

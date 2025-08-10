@@ -119,8 +119,17 @@ sudo systemctl restart pregnancy-tracker-auto
 
 ## Troubleshooting
 
-**Display not updating?**
-- Check WiFi connection
+**Display not updating from GitHub?**
+- Check WiFi connection: `ping github.com`
+- Check logs for git errors: `sudo journalctl -u pregnancy-tracker-auto -f | grep -i git`
+- If you see "dubious ownership" errors, run:
+  ```bash
+  git config --global --add safe.directory ~/e-ink-pregnancy-tracker
+  sudo git config --global --add safe.directory ~/e-ink-pregnancy-tracker
+  ```
+- Force manual update: `cd ~/e-ink-pregnancy-tracker && ./manual_update.sh`
+
+**Display not showing anything?**
 - Verify service is running: `sudo systemctl status pregnancy-tracker-auto`
 - Check logs for errors: `sudo journalctl -u pregnancy-tracker-auto -n 50`
 
