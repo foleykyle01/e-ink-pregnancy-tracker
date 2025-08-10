@@ -118,7 +118,20 @@ Key files:
 
 ## Troubleshooting
 
-**Display not updating?**
+**Display not updating from GitHub?**
+
+Force a manual update:
+```bash
+cd ~/e-ink-pregnancy-tracker
+./manual_update.sh
+```
+
+Check the update logs:
+```bash
+sudo journalctl -u pregnancy-tracker-auto -f | grep -E "(Fetching|Found|Updates|branch)"
+```
+
+**Display not showing anything?**
 ```bash
 sudo systemctl status pregnancy-tracker-auto
 sudo journalctl -u pregnancy-tracker-auto -f
@@ -128,6 +141,12 @@ sudo journalctl -u pregnancy-tracker-auto -f
 ```bash
 sudo systemctl restart pregnancy-tracker-auto
 ```
+
+**Common Issues:**
+
+1. **Updates not pulling:** The script now auto-detects whether your repository uses `main` or `master` branch
+2. **Local changes blocking updates:** The update script will stash local changes automatically
+3. **Network issues:** Check your Pi's internet connection with `ping github.com`
 
 ## Credits
 
