@@ -1,11 +1,22 @@
-.idea
+# IDE
+.idea/
 *.iml
+.vscode/
+*.swp
+*.swo
+*~
 
-config.json
+# Configuration (keep config.json tracked for example)
+# config.json
 
 # Test files
 test_*.py
+*_test.py
+*.test.py
+local_test.py
 *_preview.png
+*_fixed.png
+milestone_*.png
 screen_*.png
 
 # Python
@@ -17,11 +28,23 @@ __pycache__/
 env/
 venv/
 .venv
+.env
 
 # Logs
 *.log
+logs/
 pregnancy-tracker*.log
 
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Local settings
+.claude/
+settings.local.json

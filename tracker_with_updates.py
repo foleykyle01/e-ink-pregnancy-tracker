@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 """
 Main tracker script that handles auto-updates
-Checks for GitHub updates every hour and restarts if needed
+Checks for GitHub updates periodically and restarts if needed
 """
 import subprocess
 import time
@@ -13,7 +13,7 @@ import hashlib
 import logging
 
 # Configuration
-UPDATE_CHECK_INTERVAL = 3600  # Check for updates every hour (in seconds)
+UPDATE_CHECK_INTERVAL = 1800  # Check for updates every 30 minutes (in seconds)
 REPO_DIR = "/home/kylefoley/e-ink-pregnancy-tracker"
 
 # Setup logging
