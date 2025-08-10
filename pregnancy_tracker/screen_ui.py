@@ -213,32 +213,31 @@ class ScreenUI:
     
     def _draw_appointments_page(self):
         """Draw the appointments page showing next upcoming appointment"""
+        # Draw "Coming Up" as the title instead of "New Foley Tracker"
         title_font = create_font(20)
-        _, title_h = self._calculate_text_size("New Foley Progress", title_font)
+        title_str = "Coming Up"
+        w, h = self._calculate_text_size(title_str, title_font)
+        pos = ((self.width-w)/2, self.TITLE_MARGIN_TOP)
+        self._img_draw.text(pos, title_str, font=title_font, fill=BLACK)
         
-        # Line is already drawn in main draw() method
+        # Draw the decorative line
+        _, title_h = self._calculate_text_size(title_str, title_font)
         line_y = self.TITLE_MARGIN_TOP + title_h + 6
+        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
         
         # Get next appointment
         next_appointment = self._get_next_appointment()
         
         if next_appointment:
-            # Draw "COMING UP" header with better spacing
-            header_font = create_font(16)
-            header_text = "COMING UP"
-            w, h = self._calculate_text_size(header_text, header_font)
-            pos = ((self.width - w) / 2, line_y + 20)
-            self._img_draw.text(pos, header_text, font=header_font, fill=DARK_GRAY)
-            
             # Parse and format date
             appt_date = datetime.strptime(next_appointment['date'], '%Y-%m-%d')
             date_str = appt_date.strftime('%b %d').upper()  # Shortened format like "AUG 15"
             
-            # Draw date and time in larger font on same line
+            # Draw date and time in larger font on same line (moved up for more room)
             datetime_font = create_font(24)
             datetime_str = f"{date_str} • {next_appointment['time']}"
             w, h = self._calculate_text_size(datetime_str, datetime_font)
-            pos = ((self.width - w) / 2, line_y + 48)
+            pos = ((self.width - w) / 2, line_y + 20)  # Moved up from +30
             self._img_draw.text(pos, datetime_str, font=datetime_font, fill=BLACK)
             
             # Draw appointment type with text wrapping if needed
@@ -246,10 +245,10 @@ class ScreenUI:
             type_text = next_appointment['type'].upper()
             
             # Check if text needs wrapping
-            max_width = self.width - 40  # Leave 20px margin on each side
+            max_width = self.width - 30  # Reduced margins for more text space
             w, h = self._calculate_text_size(type_text, type_font)
             
-            type_y = line_y + 85
+            type_y = line_y + 50  # Moved up from +65 for more room
             
             if w > max_width:
                 # Text too long, wrap it
@@ -270,7 +269,7 @@ class ScreenUI:
                     lines.append(current_line)
                 
                 # Draw each line centered
-                for i, line in enumerate(lines[:2]):  # Max 2 lines
+                for i, line in enumerate(lines[:3]):  # Increased to max 3 lines
                     line_w, line_h = self._calculate_text_size(line, type_font)
                     pos = ((self.width - line_w) / 2, type_y + i * 22)
                     self._img_draw.text(pos, line, font=type_font, fill=BLACK)
@@ -388,13 +387,15 @@ class ScreenUI:
         self._img = Image.new('L', (self.width, self.height), 255)
         self._img_draw = ImageDraw.Draw(self._img)
         
-        self._draw_title()
-        
-        # Draw decorative line under title for all pages
-        title_font = create_font(20)
-        _, title_h = self._calculate_text_size("New Foley Progress", title_font)
-        line_y = self.TITLE_MARGIN_TOP + title_h + 6
-        self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
+        # Draw title and decorative line for pages except appointments
+        if self.current_page != 2:
+            self._draw_title()
+            
+            # Draw decorative line under title
+            title_font = create_font(20)
+            _, title_h = self._calculate_text_size("New Foley Progress", title_font)
+            line_y = self.TITLE_MARGIN_TOP + title_h + 6
+            self._img_draw.line([(20, line_y), (self.width - 20, line_y)], fill=BLACK, width=2)
         
         if self.current_page == 0:
             # Progress screen
@@ -405,7 +406,7 @@ class ScreenUI:
             # Size comparison screen
             self._draw_size_comparison()
         elif self.current_page == 2:
-            # Appointments screen
+            # Appointments screen (has its own title)
             self._draw_appointments_page()
         elif self.current_page == 3:
             # Milestones screen
