@@ -124,9 +124,9 @@ def update_checker_thread():
         time.sleep(UPDATE_CHECK_INTERVAL)
         logging.info("Running scheduled update check...")
         if check_and_apply_updates():
-            # Restart the entire script if critical files changed
-            logging.info("Restarting tracker...")
-            os.execv(sys.executable, [sys.executable] + sys.argv)
+            # Exit with code 0 to trigger systemd restart
+            logging.info("Updates applied, exiting for restart...")
+            os._exit(0)  # Immediate exit, systemd will restart us
 
 def run_main_tracker():
     """Run the main tracker script"""
@@ -143,8 +143,8 @@ def run_main_tracker():
     except Exception as e:
         logging.error(f"Tracker error: {e}")
         time.sleep(10)
-        # Restart on error
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        # Exit cleanly, systemd will restart us
+        sys.exit(1)
 
 if __name__ == "__main__":
     # Check for updates on startup
@@ -153,8 +153,8 @@ if __name__ == "__main__":
     
     # Initial update check
     if check_and_apply_updates():
-        logging.info("Updates found on startup, restarting...")
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        logging.info("Updates found on startup, exiting for restart...")
+        os._exit(0)  # Immediate exit, systemd will restart us
     
     # Run the tracker
     run_main_tracker()
