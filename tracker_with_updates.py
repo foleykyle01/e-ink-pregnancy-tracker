@@ -9,7 +9,6 @@ import time
 import os
 import sys
 import threading
-import hashlib
 import logging
 
 # Configuration
@@ -22,14 +21,6 @@ logging.basicConfig(
     format='[%(asctime)s] %(levelname)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-
-def get_file_hash(filepath):
-    """Get hash of a file to detect changes"""
-    try:
-        with open(filepath, 'rb') as f:
-            return hashlib.md5(f.read()).hexdigest()
-    except:
-        return None
 
 def get_default_branch():
     """Get the default branch name (main or master)"""
@@ -70,10 +61,6 @@ def check_and_apply_updates():
         # Get the default branch
         branch = get_default_branch()
         logging.info(f"Checking for updates on branch: {branch}")
-        
-        # Get the hash of main files before update
-        main_hash_before = get_file_hash("main.py")
-        ui_hash_before = get_file_hash("pregnancy_tracker/screen_ui.py")
         
         # Fetch latest changes from GitHub
         logging.info("Fetching from GitHub...")
@@ -120,16 +107,9 @@ def check_and_apply_updates():
             
             logging.info("Updates pulled successfully")
             
-            # Check if critical files changed
-            main_hash_after = get_file_hash("main.py")
-            ui_hash_after = get_file_hash("pregnancy_tracker/screen_ui.py")
-            
-            if main_hash_before != main_hash_after or ui_hash_before != ui_hash_after:
-                logging.info("Critical files updated, restart required")
-                return True  # Need restart
-            else:
-                logging.info("Updates applied (data files only, no restart needed)")
-                return False  # No restart needed
+            # Always restart when ANY updates are pulled
+            logging.info("Updates applied, restarting to ensure all changes take effect")
+            return True  # Always restart after updates
         else:
             logging.debug("No updates available")
             return False  # No updates
