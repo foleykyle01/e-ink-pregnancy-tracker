@@ -9,7 +9,7 @@ A Raspberry Pi-powered e-ink display that shows pregnancy progress, baby size co
   - Baby size comparison (fruit/object references)
   - Next appointment reminder
   - Baby info (weeks, days remaining, trimester)
-- **Auto-Updates** from GitHub every hour
+- **Auto-Updates** from GitHub every 30 minutes
 - **Runs Automatically** on boot - no interaction needed
 - **Family-Friendly** - designed for non-technical users
 
@@ -63,8 +63,8 @@ This installer will:
 
 **That's it!** The tracker is now running and will:
 - Start automatically when the Pi boots
-- Check for updates every hour
-- Apply changes automatically
+- Check for updates every 30 minutes
+- Apply changes and restart automatically
 - Keep running 24/7
 
 ## Using the Tracker
@@ -92,7 +92,7 @@ Edit `appointments.json` with your next appointment:
 }
 ```
 
-Commit and push to GitHub - the display will update within an hour.
+Commit and push to GitHub - the display will update within 30 minutes.
 
 ## Management Commands
 

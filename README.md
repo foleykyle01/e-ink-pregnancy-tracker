@@ -25,9 +25,10 @@ The tracker runs 24/7, automatically updates from GitHub, and is controlled by p
 4. **Milestones** - Weekly developmental updates and baby weight
 
 ### Auto-Update System
-- Checks GitHub for updates every hour
-- Automatically applies changes without intervention
+- Checks GitHub for updates every 30 minutes
+- Automatically applies changes and restarts the display
 - Perfect for remote management by tech-savvy family members
+- Any change (code, appointments, config) takes effect immediately
 
 ### Family-Friendly Design
 - Physical button controls
@@ -82,7 +83,7 @@ Edit `appointments.json` to add appointments:
 }
 ```
 
-Push changes to GitHub and the display updates automatically within an hour.
+Push changes to GitHub and the display updates automatically within 30 minutes.
 
 ## Button Controls
 
