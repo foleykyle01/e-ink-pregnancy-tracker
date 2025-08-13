@@ -39,7 +39,12 @@ class ScreenUI:
 
     def _draw_title(self):
         font = create_font(20)
-        title_str = "New Foley Tracker"
+        # For milestones page, show week-specific title
+        if self.current_page == 3:
+            week = self.pregnancy.get_pregnancy_week()
+            title_str = f"Week {week} Milestones"
+        else:
+            title_str = "New Foley Tracker"
         w, h = self._calculate_text_size(title_str, font)
         pos = ((self.width-w)/2, self.TITLE_MARGIN_TOP)
         self._img_draw.text(pos, title_str, font=font, fill=BLACK)
@@ -320,32 +325,25 @@ class ScreenUI:
         week = self.pregnancy.get_pregnancy_week()
         milestone = get_milestone_for_week(week)
         
-        # Draw header
-        header_font = create_font(16)
-        header_text = f"WEEK {week} MILESTONES"
-        w, h = self._calculate_text_size(header_text, header_font)
-        pos = ((self.width - w) / 2, line_y + 15)
-        self._img_draw.text(pos, header_text, font=header_font, fill=DARK_GRAY)
-        
         # Draw weight
-        weight_label_font = create_font(12)
+        weight_label_font = create_font(11)
         weight_label = "WEIGHT"
         w, h = self._calculate_text_size(weight_label, weight_label_font)
-        pos = ((self.width - w) / 2, line_y + 40)
-        self._img_draw.text(pos, weight_label, font=weight_label_font, fill=DARK_GRAY)
+        pos = ((self.width - w) / 2, line_y + 20)
+        self._img_draw.text(pos, weight_label, font=weight_label_font, fill=LIGHT_GRAY)
         
-        weight_font = create_font(18)
+        weight_font = create_font(16)
         weight_text = milestone['weight']
         w, h = self._calculate_text_size(weight_text, weight_font)
-        pos = ((self.width - w) / 2, line_y + 55)
+        pos = ((self.width - w) / 2, line_y + 38)
         self._img_draw.text(pos, weight_text, font=weight_font, fill=BLACK)
         
         # Draw development info with text wrapping
-        dev_label_font = create_font(12)
+        dev_label_font = create_font(11)
         dev_label = "DEVELOPMENT"
         w, h = self._calculate_text_size(dev_label, dev_label_font)
-        pos = ((self.width - w) / 2, line_y + 80)
-        self._img_draw.text(pos, dev_label, font=dev_label_font, fill=DARK_GRAY)
+        pos = ((self.width - w) / 2, line_y + 70)
+        self._img_draw.text(pos, dev_label, font=dev_label_font, fill=LIGHT_GRAY)
         
         # Wrap development text if needed - smaller font for better fit
         dev_font = create_font(13)
@@ -370,7 +368,7 @@ class ScreenUI:
             lines.append(current_line)
         
         # Draw development text lines (max 4 lines to fit screen)
-        dev_y = line_y + 95
+        dev_y = line_y + 88
         line_spacing = 16  # Reduced spacing between lines
         for i, line in enumerate(lines[:4]):  # Increased to 4 lines
             line_w, line_h = self._calculate_text_size(line, dev_font)
