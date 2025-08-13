@@ -326,11 +326,11 @@ class ScreenUI:
         milestone = get_milestone_for_week(week)
         
         # Draw weight
-        weight_label_font = create_font(11)
+        weight_label_font = create_font(13)
         weight_label = "WEIGHT"
         w, h = self._calculate_text_size(weight_label, weight_label_font)
         pos = ((self.width - w) / 2, line_y + 20)
-        self._img_draw.text(pos, weight_label, font=weight_label_font, fill=LIGHT_GRAY)
+        self._img_draw.text(pos, weight_label, font=weight_label_font, fill=DARK_GRAY)
         
         weight_font = create_font(16)
         weight_text = milestone['weight']
@@ -339,11 +339,11 @@ class ScreenUI:
         self._img_draw.text(pos, weight_text, font=weight_font, fill=BLACK)
         
         # Draw development info with text wrapping
-        dev_label_font = create_font(11)
+        dev_label_font = create_font(13)
         dev_label = "DEVELOPMENT"
         w, h = self._calculate_text_size(dev_label, dev_label_font)
         pos = ((self.width - w) / 2, line_y + 70)
-        self._img_draw.text(pos, dev_label, font=dev_label_font, fill=LIGHT_GRAY)
+        self._img_draw.text(pos, dev_label, font=dev_label_font, fill=DARK_GRAY)
         
         # Wrap development text if needed - smaller font for better fit
         dev_font = create_font(13)
