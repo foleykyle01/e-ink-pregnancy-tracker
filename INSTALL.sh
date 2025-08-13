@@ -28,6 +28,22 @@ sudo apt-get install -y python3-pip python3-pil python3-numpy git
 # Install Python packages (using break-system-packages for dedicated Pi)
 pip3 install --break-system-packages RPi.GPIO spidev pillow
 
+# Install Waveshare e-Paper library
+echo ""
+echo "📺 Installing Waveshare e-Paper library..."
+pip3 install --break-system-packages waveshare-epd
+
+echo ""
+echo "🔌 Enabling SPI interface..."
+# Enable SPI interface (required for e-Paper display)
+if ! grep -q "^dtparam=spi=on" /boot/config.txt; then
+    echo "dtparam=spi=on" | sudo tee -a /boot/config.txt > /dev/null
+    echo "  ✓ SPI enabled (reboot required)"
+    REBOOT_REQUIRED=1
+else
+    echo "  ✓ SPI already enabled"
+fi
+
 echo ""
 echo "🔧 Setting up auto-start service..."
 
@@ -82,3 +98,9 @@ echo ""
 echo "To update appointments, edit appointments.json and push to GitHub."
 echo "The display will update automatically within 30 minutes."
 echo ""
+
+if [ ! -z "$REBOOT_REQUIRED" ]; then
+    echo "⚠️  IMPORTANT: A reboot is required for SPI to be enabled!"
+    echo "   Run: sudo reboot"
+    echo ""
+fi
