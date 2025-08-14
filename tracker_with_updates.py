@@ -54,6 +54,22 @@ def get_default_branch():
     # Default to main
     return "main"
 
+def wait_for_network(max_attempts=30, delay=2):
+    """Wait for network connectivity before proceeding"""
+    import socket
+    for attempt in range(max_attempts):
+        try:
+            # Try to resolve GitHub's domain
+            socket.gethostbyname("github.com")
+            logging.info("Network is ready")
+            return True
+        except socket.gaierror:
+            if attempt < max_attempts - 1:
+                logging.info(f"Waiting for network... attempt {attempt + 1}/{max_attempts}")
+                time.sleep(delay)
+    logging.error("Network not available after waiting")
+    return False
+
 def check_and_apply_updates():
     """Check GitHub for updates and apply them"""
     try:
@@ -150,12 +166,19 @@ def run_main_tracker():
 if __name__ == "__main__":
     # Check for updates on startup
     logging.info("Starting pregnancy tracker with auto-updates...")
+    
+    # Wait for network to be ready (important after reboot)
+    if not wait_for_network():
+        logging.error("Network not available, running in offline mode")
+        # Continue anyway - the display should still work offline
+    
     os.chdir(REPO_DIR)
     
-    # Initial update check
-    if check_and_apply_updates():
-        logging.info("Updates found on startup, exiting for restart...")
-        os._exit(0)  # Immediate exit, systemd will restart us
+    # Initial update check (only if network is available)
+    if wait_for_network(max_attempts=1, delay=0):  # Quick check
+        if check_and_apply_updates():
+            logging.info("Updates found on startup, exiting for restart...")
+            os._exit(0)  # Immediate exit, systemd will restart us
     
     # Run the tracker
     run_main_tracker()
