@@ -1,9 +1,11 @@
 [Unit]
 Description=E-ink Pregnancy Tracker with Auto Updates
-After=network.target
+After=network.target network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
+# Note: These paths will be automatically updated by INSTALL.sh to match your installation directory
 ExecStart=/usr/bin/python3 /home/kylefoley/e-ink-pregnancy-tracker/tracker_with_updates.py
 Restart=always
 RestartSec=10

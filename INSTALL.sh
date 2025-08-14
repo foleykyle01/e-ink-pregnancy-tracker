@@ -74,8 +74,7 @@ sudo cp "$SCRIPT_DIR/pregnancy-tracker-auto.service" /etc/systemd/system/
 # Update the service file with correct path
 sudo sed -i "s|/home/kylefoley/e-ink-pregnancy-tracker|$SCRIPT_DIR|g" /etc/systemd/system/pregnancy-tracker-auto.service
 
-# Update the tracker script with correct path
-sed -i "s|REPO_DIR = \"/home/kylefoley/e-ink-pregnancy-tracker\"|REPO_DIR = \"$SCRIPT_DIR\"|g" "$SCRIPT_DIR/tracker_with_updates.py"
+# No need to update tracker script - it now dynamically determines its own path
 
 echo ""
 echo "🔐 Configuring Git safe directory..."
