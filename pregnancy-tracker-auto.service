@@ -1,6 +1,6 @@
 [Unit]
 Description=E-ink Pregnancy Tracker with Auto Updates
-After=network.target network-online.target
+After=network.target network-online.target time-sync.target
 Wants=network-online.target
 
 [Service]
@@ -14,6 +14,14 @@ WorkingDirectory=/home/kylefoley/e-ink-pregnancy-tracker
 
 # Give it network access for GitHub updates
 PrivateNetwork=no
+
+# Kill any hanging git processes on stop
+ExecStopPost=/usr/bin/pkill -f "git fetch" || true
+ExecStopPost=/usr/bin/pkill -f "git pull" || true
+
+# Resource limits to prevent hanging
+TimeoutStartSec=60
+TimeoutStopSec=30
 
 # Logging
 StandardOutput=journal
