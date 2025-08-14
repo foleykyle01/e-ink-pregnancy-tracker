@@ -64,11 +64,16 @@ Default password is `raspberry` (you should change this for security).
 - **Permission denied**: Check you're using the correct username (default is `pi`) and password
 - **Can't find the Pi**: Ensure both devices are on the same network
 
-### Step 3: Clone the Repository
+### Step 3: Install Git and Clone the Repository
 
-Once connected via SSH, run:
+Git needs to be installed on fresh Raspberry Pi OS installations:
 
 ```bash
+# Install git
+sudo apt update
+sudo apt install git -y
+
+# Clone the repository
 cd ~
 git clone https://github.com/[YOUR-USERNAME]/e-ink-pregnancy-tracker.git
 cd e-ink-pregnancy-tracker
