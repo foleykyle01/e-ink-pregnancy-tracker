@@ -31,17 +31,32 @@ pip3 install --break-system-packages RPi.GPIO spidev pillow
 # Install Waveshare e-Paper library
 echo ""
 echo "📺 Installing Waveshare e-Paper library..."
-pip3 install --break-system-packages waveshare-epd
+# Clone the Waveshare library files if they don't exist
+if [ ! -d "$SCRIPT_DIR/waveshare_epd" ]; then
+    echo "  Downloading Waveshare display drivers..."
+    git clone https://github.com/waveshare/e-Paper.git "$SCRIPT_DIR/temp_epaper" 2>/dev/null
+    cp -r "$SCRIPT_DIR/temp_epaper/RaspberryPi_JetsonNano/python/lib/waveshare_epd" "$SCRIPT_DIR/"
+    rm -rf "$SCRIPT_DIR/temp_epaper"
+    echo "  ✓ Waveshare drivers installed"
+else
+    echo "  ✓ Waveshare drivers already present"
+fi
 
 echo ""
 echo "🔌 Enabling SPI interface..."
-# Enable SPI interface (required for e-Paper display)
-if ! grep -q "^dtparam=spi=on" /boot/config.txt; then
-    echo "dtparam=spi=on" | sudo tee -a /boot/config.txt > /dev/null
-    echo "  ✓ SPI enabled (reboot required)"
-    REBOOT_REQUIRED=1
+# Enable SPI using raspi-config (more reliable method)
+sudo raspi-config nonint do_spi 0
+if [ $? -eq 0 ]; then
+    echo "  ✓ SPI enabled successfully"
+    # Check if SPI was just enabled (requires reboot)
+    if ! ls /dev/spidev* 2>/dev/null | grep -q spidev; then
+        echo "  ⚠️  SPI enabled but reboot required to activate"
+        REBOOT_REQUIRED=1
+    fi
 else
-    echo "  ✓ SPI already enabled"
+    echo "  ⚠️  Failed to enable SPI automatically"
+    echo "     Please run: sudo raspi-config"
+    echo "     Navigate to: Interface Options > SPI > Enable"
 fi
 
 echo ""

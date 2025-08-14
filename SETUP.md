@@ -81,13 +81,24 @@ cd e-ink-pregnancy-tracker
 
 ### Step 4: Configure Your Due Date
 
-Edit `config.json` with your expected birth date:
+Edit `config.json` with your expected birth date using nano (a simple text editor):
+
+```bash
+nano config.json
+```
+
+Change the date to your expected birth date:
 
 ```json
 {
     "expected_birth_date": "2025-05-15"
 }
 ```
+
+Save and exit nano:
+- Press `Ctrl + X` to exit
+- Press `Y` to confirm saving
+- Press `Enter` to confirm the filename
 
 ### Step 5: Run the Installer
 
