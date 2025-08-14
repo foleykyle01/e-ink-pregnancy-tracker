@@ -81,13 +81,22 @@ def check_and_apply_updates():
         
         # Fetch latest changes from GitHub
         logging.info("Fetching from GitHub...")
-        result = subprocess.run(
-            ["git", "fetch", "origin"],
-            capture_output=True,
-            text=True
-        )
-        if result.returncode != 0:
-            logging.error(f"Git fetch failed: {result.stderr}")
+        try:
+            result = subprocess.run(
+                ["git", "fetch", "origin"],
+                capture_output=True,
+                text=True,
+                timeout=10,  # Add 10 second timeout
+                env={**os.environ, "GIT_TERMINAL_PROMPT": "0"}  # Disable git credential prompts
+            )
+            if result.returncode != 0:
+                logging.error(f"Git fetch failed: {result.stderr}")
+                return False
+        except subprocess.TimeoutExpired:
+            logging.error("Git fetch timed out after 10 seconds")
+            return False
+        except Exception as e:
+            logging.error(f"Git fetch error: {e}")
             return False
         
         # Check if there are updates
