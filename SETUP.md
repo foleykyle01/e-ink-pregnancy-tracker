@@ -28,9 +28,45 @@ A Raspberry Pi-powered e-ink display that shows pregnancy progress, baby size co
 2. Enable SSH and connect to WiFi
 3. Attach the Waveshare e-ink display to the GPIO pins
 
-### Step 2: Clone the Repository
+### Step 2: SSH into Your Raspberry Pi
 
-SSH into your Raspberry Pi and run:
+#### Finding Your Pi's IP Address
+
+1. **From your router**: Check your router's admin panel for connected devices
+2. **From the Pi directly** (if you have a monitor attached):
+   ```bash
+   hostname -I
+   ```
+3. **Using network scanning** (from another computer on same network):
+   ```bash
+   # On Mac/Linux:
+   arp -a | grep raspberry
+   # Or use nmap:
+   nmap -sn 192.168.1.0/24
+   ```
+
+#### Connecting via SSH
+
+From your computer's terminal:
+
+```bash
+ssh pi@[YOUR-PI-IP-ADDRESS]
+# Example: ssh pi@192.168.1.100
+```
+
+Default password is `raspberry` (you should change this for security).
+
+**First time connecting?** You'll see a fingerprint warning - type `yes` to continue.
+
+#### SSH Troubleshooting
+
+- **Connection refused**: Enable SSH on the Pi by creating an empty file named `ssh` (no extension) in the boot partition of the SD card
+- **Permission denied**: Check you're using the correct username (default is `pi`) and password
+- **Can't find the Pi**: Ensure both devices are on the same network
+
+### Step 3: Clone the Repository
+
+Once connected via SSH, run:
 
 ```bash
 cd ~
@@ -38,7 +74,7 @@ git clone https://github.com/[YOUR-USERNAME]/e-ink-pregnancy-tracker.git
 cd e-ink-pregnancy-tracker
 ```
 
-### Step 3: Configure Your Due Date
+### Step 4: Configure Your Due Date
 
 Edit `config.json` with your expected birth date:
 
@@ -48,7 +84,7 @@ Edit `config.json` with your expected birth date:
 }
 ```
 
-### Step 4: Run the Installer
+### Step 5: Run the Installer
 
 ```bash
 chmod +x INSTALL.sh
