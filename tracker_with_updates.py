@@ -13,7 +13,8 @@ import logging
 
 # Configuration
 UPDATE_CHECK_INTERVAL = 1800  # Check for updates every 30 minutes (in seconds)
-REPO_DIR = "/home/kylefoley/e-ink-pregnancy-tracker"
+# Dynamically determine the repository directory
+REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Setup logging
 logging.basicConfig(
