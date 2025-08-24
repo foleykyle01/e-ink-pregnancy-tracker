@@ -172,15 +172,15 @@ class ScreenUI:
         
         # Dynamically adjust font size based on text length (all increased)
         if len(size_str) > 14:
-            size_font = create_font(20)  # Increased from 14
+            size_font = create_font(18)  # Reduced to prevent overflow
         elif len(size_str) > 10:
-            size_font = create_font(22)  # Increased from 16
+            size_font = create_font(20)  # Reduced to prevent overflow
         else:
-            size_font = create_font(24)  # Increased from 18
+            size_font = create_font(22)  # Reduced to prevent overflow
         
         # Check if we need to break into two lines
         w, h = self._calculate_text_size(size_str, size_font)
-        max_width = (self.width / 2) - 20  # Maximum width for right column
+        max_width = (self.width / 2) - 30  # Reduced width to ensure text fits
         
         if w > max_width and ' ' in size_comparison:
             # Break into two lines
