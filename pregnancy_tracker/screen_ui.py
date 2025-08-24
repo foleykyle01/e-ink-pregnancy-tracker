@@ -131,9 +131,9 @@ class ScreenUI:
         # Line is already drawn in main draw() method
         line_y = self.TITLE_MARGIN_TOP + title_h + 6
         
-        # Define column positions
-        left_column_x = self.width * 0.25  # 25% from left
-        right_column_x = self.width * 0.75  # 75% from left
+        # Define column positions - moved divider left for more space on right
+        left_column_x = self.width * 0.18  # 18% from left (was 25%)
+        right_column_x = self.width * 0.65  # 65% from left (was 75%)
         content_start_y = line_y + 20
         
         # LEFT COLUMN - Week information
@@ -151,8 +151,8 @@ class ScreenUI:
         pos = (left_column_x - w/2, content_start_y + 22)
         self._img_draw.text(pos, week_num_str, font=week_num_font, fill=BLACK)
         
-        # Draw vertical divider line
-        divider_x = self.width / 2
+        # Draw vertical divider line - moved left to match new column layout
+        divider_x = self.width * 0.36  # Moved left (was 0.5)
         self._img_draw.line(
             [(divider_x, content_start_y), (divider_x, content_start_y + 90)],  # Extended line
             fill=BLACK, 
@@ -180,7 +180,7 @@ class ScreenUI:
         
         # Check if we need to break into two lines
         w, h = self._calculate_text_size(size_str, size_font)
-        max_width = (self.width / 2) - 30  # Reduced width to ensure text fits
+        max_width = self.width * 0.64 - 15  # Adjusted for new column layout (64% of width minus margin)
         
         if w > max_width and ' ' in size_comparison:
             # Break into two lines
